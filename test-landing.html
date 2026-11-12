@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kestrel Security - Test Landing Page</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f1923 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        
+        .container {
+            text-align: center;
+            padding: 40px;
+            max-width: 600px;
+        }
+        
+        .logo {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 30px;
+            background: #000;
+            border: 3px solid #D4AF37;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+        }
+        
+        h1 {
+            color: #D4AF37;
+            font-size: 48px;
+            margin-bottom: 10px;
+            letter-spacing: 4px;
+        }
+        
+        .tagline {
+            color: #888;
+            font-size: 18px;
+            margin-bottom: 40px;
+        }
+        
+        .description {
+            color: #ccc;
+            line-height: 1.8;
+            margin-bottom: 40px;
+            font-size: 16px;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 16px 40px;
+            font-size: 18px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: #D4AF37;
+            color: #000;
+        }
+        
+        .btn-primary:hover {
+            background: #c09b2d;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(212, 175, 55, 0.3);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: #D4AF37;
+            border: 2px solid #D4AF37;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(212, 175, 55, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .features {
+            margin-top: 60px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            text-align: left;
+        }
+        
+        .feature {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+        
+        .feature h3 {
+            color: #D4AF37;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .feature p {
+            color: #aaa;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🛡️</div>
+        <h1>KESTREL</h1>
+        <p class="tagline">Security Consignment System</p>
+        
+        <p class="description">
+            Professional asset tracking and security consignment management. 
+            Track your valuable assets in real-time with our secure, reliable platform.
+        </p>
+        
+        <div class="cta-buttons">
+            <!-- Main CTA - Get Started -->
+            <a href="http://localhost:5174/login" class="btn btn-primary">
+                Get Started
+            </a>
+            
+            <!-- Alternative - Direct Login -->
+            <a href="http://localhost:5174/login" class="btn btn-secondary">
+                Login
+            </a>
+        </div>
+        
+        <div class="features">
+            <div class="feature">
+                <h3>🔒 Secure Tracking</h3>
+                <p>End-to-end encryption for all your consignment data</p>
+            </div>
+            <div class="feature">
+                <h3>📍 Real-time Updates</h3>
+                <p>Track your assets location and status in real-time</p>
+            </div>
+            <div class="feature">
+                <h3>📊 Full Audit Trail</h3>
+                <p>Complete history and documentation of all transactions</p>
+            </div>
+            <div class="feature">
+                <h3>🚀 Fast & Reliable</h3>
+                <p>Lightning-fast performance with 99.9% uptime</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Optional: Add environment detection
+        const isLocalhost = window.location.hostname === 'localhost' || 
+                           window.location.hostname === '127.0.0.1' ||
+                           window.location.hostname === '';
+        
+        console.log('Environment:', isLocalhost ? 'Development' : 'Production');
+        console.log('Frontend URL: http://localhost:5174/login');
+        
+        // Optional: Add analytics or tracking here
+        document.querySelectorAll('.btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                console.log('Button clicked:', this.textContent.trim());
+                // Add your analytics tracking here
+            });
+        });
+    </script>
+</body>
+</html>

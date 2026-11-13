@@ -6,7 +6,7 @@ User = get_user_model()
 
 
 class Command(BaseCommand):
-    help = 'Create a superuser from environment variables (for production use)'
+    help = 'Create or update a superuser from environment variables (for production use)'
 
     def handle(self, *args, **options):
         email = config('DJANGO_SUPERUSER_EMAIL', default=None)
@@ -23,21 +23,28 @@ class Command(BaseCommand):
             )
             return
 
-        if User.objects.filter(email=email).exists():
-            self.stdout.write(
-                self.style.WARNING(f'Superuser {email} already exists, skipping.')
-            )
-            return
-
         try:
-            User.objects.create_superuser(
-                email=email,
-                password=password,
-                first_name=first_name,
-                last_name=last_name,
-            )
-            self.stdout.write(self.style.SUCCESS(f'Superuser created: {email}'))
+            if User.objects.filter(email=email).exists():
+                # User exists — make sure they have correct permissions and password
+                user = User.objects.get(email=email)
+                user.is_staff = True
+                user.is_superuser = True
+                user.is_active = True
+                user.role = 'admin'
+                user.set_password(password)
+                user.save()
+                self.stdout.write(
+                    self.style.SUCCESS(f'Superuser {email} updated with correct permissions.')
+                )
+            else:
+                user = User.objects.create_superuser(
+                    email=email,
+                    password=password,
+                    first_name=first_name,
+                    last_name=last_name,
+                )
+                self.stdout.write(self.style.SUCCESS(f'Superuser created: {email}'))
         except Exception as e:
             self.stdout.write(
-                self.style.WARNING(f'Skipping superuser creation: {e}')
+                self.style.WARNING(f'Superuser command error: {e}')
             )

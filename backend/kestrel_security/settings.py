@@ -242,6 +242,8 @@ CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:5175',
     'http://127.0.0.1:5176',
     'http://127.0.0.1:3000',
+    'https://app.kestrelsecuritycompany.com',
+    'http://app.kestrelsecuritycompany.com',
 ]
 
 # Try to load from env if available

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaBell, FaUser, FaSignOutAlt, FaBars, FaCircle } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { API_BASE_URL } from '../../utils/constants';
 
 const Navbar = ({ onMenuClick }) => {
   const navigate = useNavigate();
@@ -30,7 +31,7 @@ const Navbar = ({ onMenuClick }) => {
       try {
         const token = sessionStorage.getItem('kestrel_token');
         if (!token) return;
-        const response = await fetch('http://localhost:8000/api/notifications/', {
+        const response = await fetch(`${API_BASE_URL}/notifications/`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (response.ok) {
@@ -52,7 +53,7 @@ const Navbar = ({ onMenuClick }) => {
     try {
       const token = sessionStorage.getItem('kestrel_token');
       if (!token) return;
-      await fetch('http://localhost:8000/api/notifications/mark_all_read/', {
+      await fetch(`${API_BASE_URL}/notifications/mark_all_read/`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });

@@ -15,6 +15,7 @@ import Layout from '../../components/common/Layout';
 import StatCard from '../../components/common/StatCard';
 import Card from '../../components/common/Card';
 import { useAuth } from '../../contexts/AuthContext';
+import { API_BASE_URL } from '../../utils/constants';
 import { formatCurrency } from '../../utils/formatters';
 
 const AdminDashboard = () => {
@@ -53,7 +54,7 @@ const AdminDashboard = () => {
           return;
         }
         
-        const response = await fetch('http://localhost:8000/api/consignments/statistics/', {
+        const response = await fetch(`${API_BASE_URL}/consignments/statistics/`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',

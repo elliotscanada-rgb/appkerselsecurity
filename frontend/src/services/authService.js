@@ -54,7 +54,7 @@ export const authService = {
    */
   login: async (email, password) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      const response = await fetch(`${API_BASE_URL}/auth/login/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -96,7 +96,7 @@ export const authService = {
 
       // Notify backend
       if (token) {
-        await fetch(`${API_BASE_URL}/auth/logout`, {
+        await fetch(`${API_BASE_URL}/auth/logout/`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -156,7 +156,7 @@ export const authService = {
         throw new Error('No refresh token available');
       }
 
-      const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+      const response = await fetch(`${API_BASE_URL}/auth/refresh/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -191,7 +191,7 @@ export const authService = {
       const token = localStorage.getItem(AUTH_TOKEN_KEY);
       if (!token) return false;
 
-      const response = await fetch(`${API_BASE_URL}/auth/verify`, {
+      const response = await fetch(`${API_BASE_URL}/auth/verify/`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -240,7 +240,7 @@ export const authService = {
   updateProfile: async (updates) => {
     try {
       const token = localStorage.getItem(AUTH_TOKEN_KEY);
-      const response = await fetch(`${API_BASE_URL}/auth/profile`, {
+      const response = await fetch(`${API_BASE_URL}/auth/profile/`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -274,7 +274,7 @@ export const authService = {
   changePassword: async (currentPassword, newPassword) => {
     try {
       const token = localStorage.getItem(AUTH_TOKEN_KEY);
-      const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
+      const response = await fetch(`${API_BASE_URL}/auth/change-password/`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -301,7 +301,7 @@ export const authService = {
    */
   requestPasswordReset: async (email) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+      const response = await fetch(`${API_BASE_URL}/auth/forgot-password/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -327,7 +327,7 @@ export const authService = {
    */
   resetPassword: async (token, newPassword) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+      const response = await fetch(`${API_BASE_URL}/auth/reset-password/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -352,7 +352,7 @@ export const authService = {
   enableTwoFactor: async () => {
     try {
       const token = localStorage.getItem(AUTH_TOKEN_KEY);
-      const response = await fetch(`${API_BASE_URL}/auth/2fa/setup`, {
+      const response = await fetch(`${API_BASE_URL}/auth/2fa/setup/`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -382,7 +382,7 @@ export const authService = {
   verifyTwoFactor: async (code) => {
     try {
       const token = localStorage.getItem(AUTH_TOKEN_KEY);
-      const response = await fetch(`${API_BASE_URL}/auth/2fa/verify`, {
+      const response = await fetch(`${API_BASE_URL}/auth/2fa/verify/`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

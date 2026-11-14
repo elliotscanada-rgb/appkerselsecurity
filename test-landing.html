@@ -142,12 +142,12 @@
         
         <div class="cta-buttons">
             <!-- Main CTA - Get Started -->
-            <a href="http://localhost:5174/login" class="btn btn-primary">
+            <a href="https://app.kestrelsecuritycompany.com/login" class="btn btn-primary">
                 Get Started
             </a>
             
             <!-- Alternative - Direct Login -->
-            <a href="http://localhost:5174/login" class="btn btn-secondary">
+            <a href="https://app.kestrelsecuritycompany.com/login" class="btn btn-secondary">
                 Login
             </a>
         </div>
@@ -173,13 +173,9 @@
     </div>
     
     <script>
-        // Optional: Add environment detection
-        const isLocalhost = window.location.hostname === 'localhost' || 
-                           window.location.hostname === '127.0.0.1' ||
-                           window.location.hostname === '';
-        
-        console.log('Environment:', isLocalhost ? 'Development' : 'Production');
-        console.log('Frontend URL: http://localhost:5174/login');
+        // Environment detection - now using production URLs
+        console.log('Frontend URL: https://app.kestrelsecuritycompany.com/login');
+        console.log('Backend API: https://appkerselsecurity.onrender.com/api');
         
         // Optional: Add analytics or tracking here
         document.querySelectorAll('.btn').forEach(btn => {

@@ -10,11 +10,11 @@ const CONFIG = {
   },
   staging: {
     frontendUrl: 'https://resolved-prude-planner.ngrok-free.dev',
-    backendUrl: 'http://localhost:8000',
+    backendUrl: 'https://appkerselsecurity.onrender.com',
   },
   production: {
-    frontendUrl: 'https://yourdomain.com', // Replace with your actual domain
-    backendUrl: 'https://api.yourdomain.com', // Replace with your actual API domain
+    frontendUrl: 'https://app.kestrelsecuritycompany.com',
+    backendUrl: 'https://appkerselsecurity.onrender.com',
   }
 };
 

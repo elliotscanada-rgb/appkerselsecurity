@@ -1,5 +1,10 @@
-// API Base URL
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://appkerselsecurity.onrender.com/api';
+// API Base URL - Production: Render, Development: localhost
+const API_BASE_URL_PROD = 'https://appkerselsecurity.onrender.com/api';
+const API_BASE_URL_DEV = 'http://localhost:8000/api';
+
+export const API_BASE_URL = import.meta.env.MODE === 'production' 
+  ? API_BASE_URL_PROD 
+  : (import.meta.env.VITE_API_BASE_URL || API_BASE_URL_DEV);
 
 // User Roles
 export const USER_ROLES = {

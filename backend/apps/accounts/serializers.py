@@ -78,6 +78,8 @@ class LoginSerializer(serializers.Serializer):
         password = attrs.get('password')
         
         if email and password:
+            # Normalize email
+            email = email.strip().lower()
             try:
                 user = User.objects.get(email=email)
             except User.DoesNotExist:

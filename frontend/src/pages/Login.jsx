@@ -46,13 +46,15 @@ const Login = () => {
       if (data.token) {
         // Use localStorage for better mobile compatibility
         localStorage.setItem('kestrel_token', data.token);
-        localStorage.setItem('refreshToken', data.refresh);
+        localStorage.setItem('refreshToken', data.refresh || '');
         localStorage.setItem('kestrel_user', JSON.stringify(data.user));
 
+        console.log('Login successful:', data.user.email, 'Role:', data.user.role);
+        
+        // Call login to update context and redirect
         login(data.user, data.token);
-
-        const redirectPath = data.user.role === 'admin' ? '/admin/dashboard' : '/client/dashboard';
-        navigate(redirectPath);
+      } else {
+        throw new Error('No token received from server');
       }
     } catch (err) {
       setError(err.message || 'Failed to login. Please try again.');

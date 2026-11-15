@@ -44,6 +44,7 @@ class ServiceCharge(models.Model):
         ('transportation', 'Transportation Fee'),
         ('handling', 'Handling Fee'),
         ('insurance', 'Insurance Fee'),
+        ('demurrage', 'Demurrage'),
         ('other', 'Other Charges'),
     ]
     

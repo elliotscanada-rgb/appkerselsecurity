@@ -12,6 +12,7 @@ class Document(models.Model):
     
     consignment = models.ForeignKey('consignments.Consignment', on_delete=models.CASCADE)
     document_type = models.CharField(max_length=30, choices=DOCUMENT_TYPE_CHOICES)
+    description = models.TextField(blank=True, help_text='Description of the document')
     file_name = models.CharField(max_length=255)
     file_path = models.FileField(upload_to='documents/%Y/%m/')
     file_size = models.IntegerField()

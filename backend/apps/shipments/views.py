@@ -97,6 +97,33 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         shipment = self.get_object()
         serializer = ShipmentWithLocationsSerializer(shipment)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def my_shipments(self, request):
+        """Get all shipments for the current client including in_transit ones."""
+        user = request.user
+        if user.role != 'client':
+            return Response(
+                {'detail': 'This endpoint is only for client users.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        queryset = Shipment.objects.filter(
+            consignment__client__user=user
+        ).select_related(
+            'consignment', 'consignment__client', 'assigned_to'
+        ).prefetch_related('location_history').order_by('-created_at')
+
+        serializer = ShipmentListSerializer(queryset, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def in_transit(self, request):
+        """Get all currently in-transit shipments — useful for tracking dashboard."""
+        queryset = self.get_queryset().filter(
+            status__in=['dispatched', 'in_transit']
+        )
+        serializer = ShipmentListSerializer(queryset, many=True, context={'request': request})
+        return Response(serializer.data)
     
     @action(detail=True, methods=['get'])
     def location_history(self, request, pk=None):

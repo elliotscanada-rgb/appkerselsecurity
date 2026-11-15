@@ -39,6 +39,10 @@ class Command(BaseCommand):
                 user.is_active = True
                 user.set_password(data['password'])
                 user.save()
+                # Ensure client profile exists if role is client
+                if data['role'] == 'client':
+                    from apps.clients.models import Client
+                    Client.objects.get_or_create(user=user)
                 self.stdout.write(self.style.WARNING(f'Updated existing user: {email}'))
             except User.DoesNotExist:
                 user = User.objects.create_user(
@@ -52,4 +56,8 @@ class Command(BaseCommand):
                 user.is_superuser = data['is_superuser']
                 user.is_active = True
                 user.save()
+                # Create client profile if role is client
+                if data['role'] == 'client':
+                    from apps.clients.models import Client
+                    Client.objects.get_or_create(user=user)
                 self.stdout.write(self.style.SUCCESS(f'Created user: {email} | Role: {data["role"]}'))

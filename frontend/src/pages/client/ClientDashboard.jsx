@@ -24,7 +24,7 @@ import StatusTimeline from '../../components/common/StatusTimeline';
 import { useAuth } from '../../contexts/AuthContext';
 import { formatCurrency, formatDate, formatWeight } from '../../utils/formatters';
 import { STATUS_COLORS, STATUS_LABELS, CATEGORY_LABELS, CONSIGNMENT_STATUS, DELIVERY_METHOD } from '../../utils/constants';
-import { consignmentApi } from '../../services/assetApi';
+import { consignmentApi, clientApi } from '../../services/assetApi';
 
 const ClientDashboard = () => {
   const { user } = useAuth();
@@ -37,6 +37,8 @@ const ClientDashboard = () => {
   const [assets, setAssets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [portfolio, setPortfolio] = useState(null);
+  const [loadingPortfolio, setLoadingPortfolio] = useState(true);
 
   // Fetch consignments from API on component mount and periodically
   useEffect(() => {
@@ -62,12 +64,29 @@ const ClientDashboard = () => {
       }
     };
 
+    const fetchPortfolio = async () => {
+      try {
+        setLoadingPortfolio(true);
+        const data = await clientApi.getClientPortfolio();
+        setPortfolio(data);
+      } catch (err) {
+        console.error('Failed to fetch portfolio:', err);
+        // Don't show error for portfolio, just use calculated values
+      } finally {
+        setLoadingPortfolio(false);
+      }
+    };
+
     setLoading(true);
     fetchConsignments();
+    fetchPortfolio();
     setLoading(false);
     
     // Set up polling to refresh data every 10 seconds for real-time charge updates
-    const pollInterval = setInterval(fetchConsignments, 10000);
+    const pollInterval = setInterval(() => {
+      fetchConsignments();
+      fetchPortfolio();
+    }, 10000);
     
     return () => clearInterval(pollInterval);
   }, []);
@@ -242,7 +261,7 @@ const ClientDashboard = () => {
               <p className="text-gray-400 text-sm sm:text-base lg:text-lg">
                 Welcome back, {user?.first_name || user?.email?.split('@')[0] || 'there'}
               </p>
-              <div className="mt-4 sm:mt-6 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div className="mt-4 sm:mt-6 grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
                 <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-3 sm:p-4">
                   <p className="text-gray-400 text-xs sm:text-sm">Total Assets</p>
                   <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-kestrel-gold">{normalizedAssets.length}</p>
@@ -250,6 +269,29 @@ const ClientDashboard = () => {
                 <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-3 sm:p-4">
                   <p className="text-gray-400 text-xs sm:text-sm">Total Value</p>
                   <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">{formatCurrency(normalizedAssets.reduce((sum, a) => sum + (parseFloat(a.total_value || a.declared_value || 0)), 0))}</p>
+                </div>
+                <div className="bg-gradient-to-br from-yellow-900/40 to-amber-900/40 border border-yellow-600/50 rounded-lg p-3 sm:p-4 col-span-2 lg:col-span-1">
+                  <p className="text-yellow-400 text-xs sm:text-sm flex items-center gap-1">
+                    <FaCoins className="text-yellow-500" />
+                    Gold Portfolio
+                  </p>
+                  {loadingPortfolio ? (
+                    <p className="text-lg sm:text-xl font-bold text-yellow-300">
+                      <FaSpinner className="animate-spin inline" /> Loading...
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-yellow-300">
+                        {portfolio?.total_gold_weight_kg 
+                          ? `${portfolio.total_gold_weight_kg.toFixed(3)} KG`
+                          : `${normalizedAssets.filter(a => a.category === 'gold_bars' || a.category === 'gold_jewellery').reduce((sum, a) => sum + (parseFloat(a.weight || 0)), 0).toFixed(3)} KG`
+                        }
+                      </p>
+                      <p className="text-xs text-yellow-500/80 mt-1">
+                        {portfolio?.gold_items_count || normalizedAssets.filter(a => a.category === 'gold_bars' || a.category === 'gold_jewellery').length} items
+                      </p>
+                    </>
+                  )}
                 </div>
                 <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-3 sm:p-4">
                   <p className="text-gray-400 text-xs sm:text-sm">In Storage</p>

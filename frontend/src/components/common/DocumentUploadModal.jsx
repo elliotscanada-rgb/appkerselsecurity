@@ -4,9 +4,14 @@ import { documentApi } from '../../services/assetApi';
 
 /**
  * DocumentUploadModal - Reusable modal for uploading documents with description
- * Used by admins to upload consignment documents
+ * Used by admins to upload documents for consignments or clients
+ * 
+ * Props:
+ * - consignmentId: (optional) Upload to specific consignment
+ * - clientId: (optional) Upload to specific client
+ * Note: Either consignmentId OR clientId must be provided
  */
-const DocumentUploadModal = ({ isOpen, onClose, consignmentId, onUploadSuccess }) => {
+const DocumentUploadModal = ({ isOpen, onClose, consignmentId, clientId, onUploadSuccess }) => {
   const [formData, setFormData] = useState({
     document_type: 'invoice',
     description: '',
@@ -26,6 +31,8 @@ const DocumentUploadModal = ({ isOpen, onClose, consignmentId, onUploadSuccess }
     { value: 'appraisal', label: 'Appraisal' },
     { value: 'insurance', label: 'Insurance' },
     { value: 'customs', label: 'Customs Document' },
+    { value: 'identification', label: 'ID Document' },
+    { value: 'proof_of_ownership', label: 'Proof of Ownership' },
     { value: 'other', label: 'Other' },
   ];
 
@@ -73,8 +80,8 @@ const DocumentUploadModal = ({ isOpen, onClose, consignmentId, onUploadSuccess }
       return;
     }
 
-    if (!consignmentId) {
-      setError('Consignment ID is required');
+    if (!consignmentId && !clientId) {
+      setError('Either Consignment ID or Client ID is required');
       return;
     }
 
@@ -83,13 +90,25 @@ const DocumentUploadModal = ({ isOpen, onClose, consignmentId, onUploadSuccess }
 
       // Create FormData for multipart upload
       const uploadData = new FormData();
-      uploadData.append('consignment', consignmentId);
+      
+      // Add either consignment or client ID
+      if (consignmentId) {
+        uploadData.append('consignment', consignmentId);
+      } else if (clientId) {
+        uploadData.append('client', clientId);
+      }
+      
       uploadData.append('document_type', formData.document_type);
       uploadData.append('description', formData.description);
       uploadData.append('file', formData.file);
 
-      // Upload document
-      const result = await documentApi.uploadDocument(uploadData);
+      // Upload document using appropriate API method
+      let result;
+      if (clientId) {
+        result = await documentApi.uploadClientDocument(uploadData);
+      } else {
+        result = await documentApi.uploadDocument(uploadData);
+      }
 
       console.log('Document uploaded successfully:', result);
       setSuccess(true);
@@ -226,10 +245,19 @@ const DocumentUploadModal = ({ isOpen, onClose, consignmentId, onUploadSuccess }
             </div>
           </div>
 
-          {/* Consignment Info */}
+          {/* Reference Info */}
           <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
-            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Consignment ID</p>
-            <p className="text-white font-semibold">{consignmentId || 'Not specified'}</p>
+            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+              {consignmentId ? 'Consignment ID' : 'Client ID'}
+            </p>
+            <p className="text-white font-semibold">
+              {consignmentId || clientId || 'Not specified'}
+            </p>
+            {consignmentId && clientId && (
+              <p className="text-xs text-yellow-400 mt-2">
+                Note: Document will be attached to consignment
+              </p>
+            )}
           </div>
 
           {/* Action Buttons */}

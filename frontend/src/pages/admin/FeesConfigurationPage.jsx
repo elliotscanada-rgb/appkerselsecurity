@@ -102,6 +102,15 @@ const FeesConfigurationPage = () => {
       color: 'red',
     },
     {
+      id: 'safekeeping',
+      name: 'Safekeeping Fee',
+      code: 'safekeeping',
+      description: 'Fee for secure safekeeping and custody of valuable items',
+      calculation_method: 'per_day',
+      icon: <FaShieldAlt className="text-emerald-400" />,
+      color: 'emerald',
+    },
+    {
       id: 'customs',
       name: 'Customs Fee',
       code: 'customs',
@@ -148,6 +157,7 @@ const FeesConfigurationPage = () => {
       red: 'bg-red-900/30 border-red-500/50',
       orange: 'bg-orange-900/30 border-orange-500/50',
       amber: 'bg-amber-900/30 border-amber-500/50',
+      emerald: 'bg-emerald-900/30 border-emerald-500/50',
     };
     return colors[color] || 'bg-gray-900/30 border-gray-500/50';
   };

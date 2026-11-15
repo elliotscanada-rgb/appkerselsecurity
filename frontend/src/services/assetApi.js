@@ -1079,6 +1079,18 @@ export const clientApi = {
   getClientConsignments: async (clientId) => {
     return apiRequest(`/clients/${clientId}/consignments/`);
   },
+
+  /**
+   * Get client's portfolio statistics (total gold weight, etc.)
+   * @param {number} clientId - Client ID (optional, defaults to current user)
+   */
+  getClientPortfolio: async (clientId = null) => {
+    if (clientId) {
+      return apiRequest(`/clients/${clientId}/portfolio/`);
+    }
+    // Get current user's portfolio
+    return apiRequest(`/clients/me/portfolio/`);
+  },
 };
 
 // =====================================================
@@ -1178,6 +1190,48 @@ export const documentApi = {
       window.open(doc.file, '_blank');
     }
     return doc;
+  },
+
+  /**
+   * Get documents for a specific client
+   * @param {number} clientId - Client ID
+   */
+  getClientDocuments: async (clientId) => {
+    return apiRequest(`/documents/by-client/${clientId}/`);
+  },
+
+  /**
+   * Upload document for a client (multipart/form-data)
+   * @param {FormData} formData - Form data with client, document_type, description, file
+   */
+  uploadClientDocument: async (formData) => {
+    const url = `${API_BASE_URL}/documents/`;
+    
+    const defaultHeaders = {};
+    const token = getAuthToken();
+    if (token) {
+      defaultHeaders['Authorization'] = `Bearer ${token}`;
+    }
+
+    const config = {
+      method: 'POST',
+      headers: defaultHeaders,
+      body: formData,
+    };
+
+    try {
+      const response = await fetch(url, config);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || errorData.detail || `Upload failed: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Client document upload failed:', error);
+      throw error;
+    }
   },
 };
 

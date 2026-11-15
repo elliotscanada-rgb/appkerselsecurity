@@ -261,30 +261,30 @@ const ClientDashboard = () => {
               <p className="text-gray-400 text-sm sm:text-base lg:text-lg">
                 Welcome back, {user?.first_name || user?.email?.split('@')[0] || 'there'}
               </p>
-              <div className="mt-4 sm:mt-6 grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
-                <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-3 sm:p-4">
-                  <p className="text-gray-400 text-xs sm:text-sm">Total Assets</p>
-                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-kestrel-gold">{normalizedAssets.length}</p>
+              <div className="mt-4 sm:mt-6 grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3 lg:gap-4">
+                <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-2 sm:p-3 lg:p-4 overflow-hidden">
+                  <p className="text-gray-400 text-xs truncate">Total Assets</p>
+                  <p className="text-lg sm:text-2xl lg:text-3xl font-bold text-kestrel-gold break-words">{normalizedAssets.length}</p>
                 </div>
-                <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-3 sm:p-4">
-                  <p className="text-gray-400 text-xs sm:text-sm">Total Value</p>
-                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">{formatCurrency(normalizedAssets.reduce((sum, a) => sum + (parseFloat(a.total_value || a.declared_value || 0)), 0))}</p>
+                <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-2 sm:p-3 lg:p-4 overflow-hidden">
+                  <p className="text-gray-400 text-xs truncate">Total Value</p>
+                  <p className="text-xs sm:text-sm lg:text-lg font-bold text-white break-words line-clamp-2">{formatCurrency(normalizedAssets.reduce((sum, a) => sum + (parseFloat(a.total_value || a.declared_value || 0)), 0))}</p>
                 </div>
-                <div className="bg-gradient-to-br from-yellow-900/40 to-amber-900/40 border border-yellow-600/50 rounded-lg p-3 sm:p-4 col-span-2 lg:col-span-1">
-                  <p className="text-yellow-400 text-xs sm:text-sm flex items-center gap-1">
-                    <FaCoins className="text-yellow-500" />
-                    Gold Portfolio
+                <div className="bg-gradient-to-br from-yellow-900/40 to-amber-900/40 border border-yellow-600/50 rounded-lg p-2 sm:p-3 lg:p-4 col-span-2 lg:col-span-1 overflow-hidden">
+                  <p className="text-yellow-400 text-xs truncate flex items-center gap-1">
+                    <FaCoins className="text-yellow-500 flex-shrink-0" />
+                    <span>Gold Portfolio</span>
                   </p>
                   {loadingPortfolio ? (
-                    <p className="text-lg sm:text-xl font-bold text-yellow-300">
+                    <p className="text-sm sm:text-base lg:text-lg font-bold text-yellow-300 mt-1">
                       <FaSpinner className="animate-spin inline" /> Loading...
                     </p>
                   ) : (
                     <>
-                      <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-yellow-300">
+                      <p className="text-sm sm:text-base lg:text-lg font-bold text-yellow-300 break-words">
                         {portfolio?.total_gold_weight_kg 
-                          ? `${portfolio.total_gold_weight_kg.toFixed(3)} KG`
-                          : `${normalizedAssets.filter(a => a.category === 'gold_bars' || a.category === 'gold_jewellery').reduce((sum, a) => sum + (parseFloat(a.weight || 0)), 0).toFixed(3)} KG`
+                          ? `${portfolio.total_gold_weight_kg.toFixed(2)} KG`
+                          : `${normalizedAssets.filter(a => a.category === 'gold_bars' || a.category === 'gold_jewellery').reduce((sum, a) => sum + (parseFloat(a.weight || 0)), 0).toFixed(2)} KG`
                         }
                       </p>
                       <p className="text-xs text-yellow-500/80 mt-1">
@@ -293,13 +293,13 @@ const ClientDashboard = () => {
                     </>
                   )}
                 </div>
-                <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-3 sm:p-4">
-                  <p className="text-gray-400 text-xs sm:text-sm">In Storage</p>
-                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-emerald-400">{normalizedAssets.filter(a => a.status === 'in_secure_storage').length}</p>
+                <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-2 sm:p-3 lg:p-4 overflow-hidden">
+                  <p className="text-gray-400 text-xs truncate">In Storage</p>
+                  <p className="text-lg sm:text-2xl lg:text-3xl font-bold text-emerald-400">{normalizedAssets.filter(a => a.status === 'in_secure_storage').length}</p>
                 </div>
-                <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-3 sm:p-4">
-                  <p className="text-gray-400 text-xs sm:text-sm">Pending</p>
-                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-orange-400">{normalizedAssets.filter(a => ['pending', 'under_verification'].includes(a.status)).length}</p>
+                <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-2 sm:p-3 lg:p-4 overflow-hidden">
+                  <p className="text-gray-400 text-xs truncate">Pending</p>
+                  <p className="text-lg sm:text-2xl lg:text-3xl font-bold text-orange-400">{normalizedAssets.filter(a => ['pending', 'under_verification'].includes(a.status)).length}</p>
                 </div>
               </div>
             </div>
@@ -401,25 +401,25 @@ const ClientDashboard = () => {
                 {/* Description Section - Right */}
                 <div className="flex-1 p-4 sm:p-6 bg-gray-900">
                   {/* Header */}
-                  <div className="flex flex-col sm:flex-row justify-between items-start gap-3 mb-4">
-                    <div className="flex-1">
-                      <h3 className="text-lg sm:text-xl font-bold text-white mb-1">
+                  <div className="flex flex-col sm:flex-row justify-between items-start gap-2 sm:gap-3 mb-4 min-w-0">
+                    <div className="flex-1 min-w-0 overflow-hidden">
+                      <h3 className="text-base sm:text-lg lg:text-xl font-bold text-white mb-1 break-words line-clamp-2">
                         {asset.name}
                       </h3>
-                      <p className="text-sm text-gray-400">
+                      <p className="text-xs sm:text-sm text-gray-400 truncate">
                         Consignment #{asset.consignmentNumber}
                       </p>
                     </div>
-                    <span className={`badge ${STATUS_COLORS[asset.status]} px-3 py-1.5 text-xs sm:text-sm whitespace-nowrap`}>
+                    <span className={`badge ${STATUS_COLORS[asset.status]} px-2 sm:px-3 py-1 sm:py-1.5 text-xs whitespace-nowrap flex-shrink-0`}>
                       {STATUS_LABELS[asset.status]}
                     </span>
                   </div>
 
                   {/* Storage Location */}
-                  <div className="bg-emerald-900/30 border border-emerald-700/40 rounded-lg p-3 mb-4 flex items-center gap-2">
-                    <FaShieldAlt className="text-emerald-400 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-emerald-300">
+                  <div className="bg-emerald-900/30 border border-emerald-700/40 rounded-lg p-2 sm:p-3 mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 overflow-hidden">
+                    <FaShieldAlt className="text-emerald-400 flex-shrink-0 mt-0.5 sm:mt-0" />
+                    <div className="flex-1 min-w-0 overflow-hidden">
+                      <p className="text-xs sm:text-sm font-semibold text-emerald-300 break-words">
                         {asset.quantity} stored in {asset.storageLocation}
                       </p>
                       <p className="text-xs text-emerald-400">Unit: {asset.storageUnit}</p>
@@ -427,85 +427,85 @@ const ClientDashboard = () => {
                   </div>
 
                   {/* Asset Details Grid */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-                    <div>
-                      <p className="text-xs text-gray-500">Weight</p>
-                      <p className="font-semibold text-sm text-gray-200">{formatWeight(asset.weight, asset.weightUnit)}</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
+                    <div className="min-w-0 overflow-hidden">
+                      <p className="text-xs text-gray-500 truncate">Weight</p>
+                      <p className="font-semibold text-xs sm:text-sm text-gray-200 break-words">{formatWeight(asset.weight, asset.weightUnit)}</p>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Purity</p>
-                      <p className="font-semibold text-sm text-gray-200">{asset.purity}%</p>
+                    <div className="min-w-0 overflow-hidden">
+                      <p className="text-xs text-gray-500 truncate">Purity</p>
+                      <p className="font-semibold text-xs sm:text-sm text-gray-200 break-words">{asset.purity}%</p>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Declared Value</p>
-                      <p className="font-semibold text-sm text-gray-200">{formatCurrency(asset.declaredValue)}</p>
+                    <div className="min-w-0 overflow-hidden">
+                      <p className="text-xs text-gray-500 truncate">Declared</p>
+                      <p className="font-semibold text-xs sm:text-sm text-gray-200 break-words line-clamp-2">{formatCurrency(asset.declaredValue)}</p>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Assessed Value</p>
-                      <p className="font-bold text-sm text-kestrel-gold">{formatCurrency(asset.assessedValue)}</p>
+                    <div className="min-w-0 overflow-hidden">
+                      <p className="text-xs text-gray-500 truncate">Assessed</p>
+                      <p className="font-bold text-xs sm:text-sm text-kestrel-gold break-words line-clamp-2">{formatCurrency(asset.assessedValue)}</p>
                     </div>
                   </div>
 
                   {/* Deposit Information */}
-                  <div className="bg-blue-900/30 border-l-4 border-blue-500 rounded-lg p-3 mb-4">
-                    <p className="text-xs text-blue-400 font-semibold mb-2 uppercase tracking-wide">Deposit Information</p>
+                  <div className="bg-blue-900/30 border-l-4 border-blue-500 rounded-lg p-3 mb-4 overflow-hidden">
+                    <p className="text-xs text-blue-400 font-semibold mb-2 uppercase tracking-wide truncate">Deposit Information</p>
                     <div className="grid grid-cols-3 gap-2">
-                      <div>
-                        <p className="text-xs text-blue-400">Date</p>
-                        <p className="font-semibold text-sm text-blue-200">{formatDate(asset.receivedDate, 'MMM dd')}</p>
+                      <div className="min-w-0 overflow-hidden">
+                        <p className="text-xs text-blue-400 truncate">Date</p>
+                        <p className="font-semibold text-xs sm:text-sm text-blue-200 break-words">{formatDate(asset.receivedDate, 'MMM dd')}</p>
                       </div>
-                      <div>
-                        <p className="text-xs text-blue-400">Year</p>
-                        <p className="font-semibold text-sm text-blue-200">{formatDate(asset.receivedDate, 'yyyy')}</p>
+                      <div className="min-w-0 overflow-hidden">
+                        <p className="text-xs text-blue-400 truncate">Year</p>
+                        <p className="font-semibold text-xs sm:text-sm text-blue-200">{formatDate(asset.receivedDate, 'yyyy')}</p>
                       </div>
-                      <div>
-                        <p className="text-xs text-blue-400">Days Stored</p>
-                        <p className="font-semibold text-sm text-blue-200">{Math.floor((new Date() - new Date(asset.receivedDate)) / (1000 * 60 * 60 * 24))} days</p>
+                      <div className="min-w-0 overflow-hidden">
+                        <p className="text-xs text-blue-400 truncate">Days</p>
+                        <p className="font-semibold text-xs sm:text-sm text-blue-200">{Math.floor((new Date() - new Date(asset.receivedDate)) / (1000 * 60 * 60 * 24))}</p>
                       </div>
                     </div>
                   </div>
 
                   {/* Fees Section */}
-                  <div className="border-t border-gray-700 pt-4 mb-4">
-                    <h4 className="font-semibold text-gray-300 mb-3 flex items-center gap-2">
-                      <FaCoins className="text-kestrel-gold" />
-                      Fee Breakdown
+                  <div className="border-t border-gray-700 pt-4 mb-4 overflow-hidden">
+                    <h4 className="font-semibold text-gray-300 mb-3 flex items-center gap-2 truncate">
+                      <FaCoins className="text-kestrel-gold flex-shrink-0" />
+                      <span className="truncate">Fee Breakdown</span>
                     </h4>
                     <div className="space-y-2">
                       {Array.isArray(asset.charges) && asset.charges.length > 0 ? (
                         <>
                           {asset.charges.map((charge, idx) => (
-                            <div key={idx} className="flex justify-between items-start text-sm bg-gray-800/50 p-3 rounded">
-                              <div className="flex-1">
-                                <p className="text-gray-300 font-semibold">
+                            <div key={idx} className="flex flex-col sm:flex-row justify-between items-start gap-2 text-xs sm:text-sm bg-gray-800/50 p-2 sm:p-3 rounded overflow-hidden">
+                              <div className="flex-1 min-w-0 overflow-hidden">
+                                <p className="text-gray-300 font-semibold truncate">
                                   {charge.type}
                                 </p>
                                 {charge.description && (
-                                  <p className="text-xs text-gray-500 mt-1">{charge.description}</p>
+                                  <p className="text-xs text-gray-500 mt-1 line-clamp-2">{charge.description}</p>
                                 )}
                                 {charge.chargedBy && (
                                   <p className="text-xs text-gray-500">Company Policy</p>
                                 )}
                               </div>
-                              <div className="text-right">
-                                <span className="font-semibold text-gray-200 block">{formatCurrency(charge.amount)}</span>
+                              <div className="text-right whitespace-nowrap">
+                                <span className="font-semibold text-gray-200 block break-words">{formatCurrency(charge.amount)}</span>
                                 <span className="text-xs text-gray-500">{charge.createdAt ? new Date(charge.createdAt).toLocaleDateString() : 'N/A'}</span>
                               </div>
                             </div>
                           ))}
                           
                           {/* Total Fees */}
-                          <div className="border-t border-gray-700 pt-2 mt-3 flex justify-between items-center font-bold">
+                          <div className="border-t border-gray-700 pt-2 mt-3 flex flex-col sm:flex-row justify-between items-start sm:items-center font-bold gap-2">
                             <span className="text-gray-300">Total Fees:</span>
-                            <span className="text-lg text-kestrel-gold">{formatCurrency(totalFees)}</span>
+                            <span className="text-lg text-kestrel-gold break-words">{formatCurrency(totalFees)}</span>
                           </div>
                           
                           {/* Pending Fees Warning */}
                           {isPending && (
-                            <div className="bg-red-900/30 border border-red-700/40 rounded-lg p-3 mt-2">
-                              <p className="text-sm font-semibold text-red-300 flex items-center gap-2">
-                                <FaExclamationTriangle />
-                                Outstanding Balance: {formatCurrency(pendingFees)}
+                            <div className="bg-red-900/30 border border-red-700/40 rounded-lg p-2 sm:p-3 mt-2 overflow-hidden">
+                              <p className="text-xs sm:text-sm font-semibold text-red-300 flex items-center gap-2">
+                                <FaExclamationTriangle className="flex-shrink-0" />
+                                <span className="break-words">Outstanding: {formatCurrency(pendingFees)}</span>
                               </p>
                               <p className="text-xs text-red-400 mt-1">
                                 ⚠️ Payment required before next process stage
@@ -514,52 +514,56 @@ const ClientDashboard = () => {
                           )}
                         </>
                       ) : (
-                        <p className="text-gray-400 text-sm">No charges applied yet</p>
+                        <p className="text-gray-400 text-xs sm:text-sm">No charges applied yet</p>
                       )}
                     </div>
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                    <button
-                      onClick={() => handleViewDetails(asset)}
-                      className="flex-1 btn-primary text-sm py-2.5 flex items-center justify-center gap-2"
-                    >
-                      <FaEye />
-                      View Details
-                    </button>
-                    <button
-                      onClick={() => handleViewHistory(asset)}
-                      className="flex-1 btn-secondary text-sm py-2.5 flex items-center justify-center gap-2"
-                    >
-                      <FaHistory />
-                      Status History
-                    </button>
-                    {(asset.status === 'in_transit' || asset.status === 'completed' || (asset.shipments && asset.shipments.length > 0)) && (
+                  <div className="flex flex-col gap-2 w-full">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <button
-                        onClick={() => window.location.href = '/client/tracking-dashboard'}
-                        className="px-4 sm:px-6 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold rounded-lg transition-all duration-300 text-sm py-2.5 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
+                        onClick={() => handleViewDetails(asset)}
+                        className="flex-1 btn-primary text-xs sm:text-sm py-2 px-2 sm:px-3 flex items-center justify-center gap-1 sm:gap-2 overflow-hidden"
                       >
-                        <FaTruck />
-                        <span>Track</span>
+                        <FaEye className="flex-shrink-0" />
+                        <span className="truncate">View</span>
                       </button>
-                    )}
-                    {asset.status === 'approved' && !asset.status.includes('delivery') && (
                       <button
-                        onClick={() => handleOpenDeliveryChoice(asset)}
-                        className="px-4 sm:px-6 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-semibold rounded-lg transition-all duration-300 text-sm py-2.5 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
+                        onClick={() => handleViewHistory(asset)}
+                        className="flex-1 btn-secondary text-xs sm:text-sm py-2 px-2 sm:px-3 flex items-center justify-center gap-1 sm:gap-2 overflow-hidden"
                       >
-                        <FaArrowRight />
-                        <span className="hidden sm:inline">Next Step</span>
+                        <FaHistory className="flex-shrink-0" />
+                        <span className="truncate">History</span>
                       </button>
-                    )}
-                    {isPending && (
-                      <button
-                        className="px-4 sm:px-6 bg-kestrel-gold hover:bg-yellow-600 text-kestrel-black font-semibold rounded-lg transition-colors text-sm py-2.5"
-                      >
-                        Pay Fees
-                      </button>
-                    )}
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      {(asset.status === 'in_transit' || asset.status === 'completed' || (asset.shipments && asset.shipments.length > 0)) && (
+                        <button
+                          onClick={() => window.location.href = '/client/tracking-dashboard'}
+                          className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold rounded-lg transition-all text-xs sm:text-sm py-2 px-2 sm:px-3 flex items-center justify-center gap-1 overflow-hidden shadow-lg hover:shadow-xl"
+                        >
+                          <FaTruck className="flex-shrink-0" />
+                          <span className="truncate">Track</span>
+                        </button>
+                      )}
+                      {asset.status === 'approved' && !asset.status.includes('delivery') && (
+                        <button
+                          onClick={() => handleOpenDeliveryChoice(asset)}
+                          className="flex-1 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-semibold rounded-lg transition-all text-xs sm:text-sm py-2 px-2 sm:px-3 flex items-center justify-center gap-1 overflow-hidden shadow-lg hover:shadow-xl"
+                        >
+                          <FaArrowRight className="flex-shrink-0" />
+                          <span className="truncate">Next Step</span>
+                        </button>
+                      )}
+                      {isPending && (
+                        <button
+                          className="flex-1 bg-kestrel-gold hover:bg-yellow-600 text-kestrel-black font-semibold rounded-lg transition-colors text-xs sm:text-sm py-2 px-2 sm:px-3 overflow-hidden"
+                        >
+                          Pay Fees
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Coin Specifications Expandable */}

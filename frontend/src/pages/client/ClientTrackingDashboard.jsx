@@ -136,8 +136,9 @@ const ClientTrackingDashboard = () => {
   };
 
   const canViewTracking = (consignment) => {
-    // Client can view tracking if they have shipments and payment is complete
-    return consignment.shipments && consignment.shipments.length > 0;
+    // Client can ALWAYS view tracking - whether in storage, transit, or any other state
+    // All consignments have a location (secure storage facility or current transit location)
+    return true;
   };
 
   if (loading) {
@@ -308,7 +309,10 @@ const ClientTrackingDashboard = () => {
                   {canViewTracking(selectedConsignment) && (
                     <div className="bg-gray-900 border border-gray-800 rounded-lg overflow-hidden">
                       <div className="h-96">
-                        <LocationMap shipment={selectedConsignment.shipments?.[0]} />
+                        <LocationMap 
+                          consignment={selectedConsignment}
+                          shipment={selectedConsignment.shipments?.[0]} 
+                        />
                       </div>
                     </div>
                   )}

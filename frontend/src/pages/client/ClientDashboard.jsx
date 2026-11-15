@@ -538,15 +538,15 @@ const ClientDashboard = () => {
                       </button>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-2">
-                      {(asset.status === 'in_transit' || asset.status === 'completed' || (asset.shipments && asset.shipments.length > 0)) && (
-                        <button
-                          onClick={() => window.location.href = '/client/tracking-dashboard'}
-                          className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold rounded-lg transition-all text-xs sm:text-sm py-2 px-2 sm:px-3 flex items-center justify-center gap-1 overflow-hidden shadow-lg hover:shadow-xl"
-                        >
-                          <FaTruck className="flex-shrink-0" />
-                          <span className="truncate">Track</span>
-                        </button>
-                      )}
+                      {/* TRACK BUTTON - NOW AVAILABLE FOR ALL CONSIGNMENTS */}
+                      <button
+                        onClick={() => window.location.href = '/client/tracking-dashboard'}
+                        className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold rounded-lg transition-all text-xs sm:text-sm py-2 px-2 sm:px-3 flex items-center justify-center gap-1 overflow-hidden shadow-lg hover:shadow-xl"
+                        title="Track your item location on map - works in storage, transit, and all states"
+                      >
+                        <FaTruck className="flex-shrink-0" />
+                        <span className="truncate">Track Location</span>
+                      </button>
                       {asset.status === 'approved' && !asset.status.includes('delivery') && (
                         <button
                           onClick={() => handleOpenDeliveryChoice(asset)}

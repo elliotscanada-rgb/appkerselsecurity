@@ -29,7 +29,7 @@ const Login = () => {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        credentials: 'include', // Important for mobile browsers
+        credentials: 'include',
         body: JSON.stringify({
           email: formData.email,
           password: formData.password,
@@ -44,10 +44,10 @@ const Login = () => {
       const data = await response.json();
 
       if (data.token) {
-        // Use localStorage for better mobile compatibility
-        localStorage.setItem('kestrel_token', data.token);
-        localStorage.setItem('refreshToken', data.refresh || '');
-        localStorage.setItem('kestrel_user', JSON.stringify(data.user));
+        // Use sessionStorage for tokens (each tab is isolated)
+        sessionStorage.setItem('kestrel_token', data.token);
+        sessionStorage.setItem('refreshToken', data.refresh || '');
+        sessionStorage.setItem('kestrel_user', JSON.stringify(data.user));
 
         console.log('Login successful:', data.user.email, 'Role:', data.user.role);
         

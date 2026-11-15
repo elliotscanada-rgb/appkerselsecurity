@@ -5,7 +5,8 @@
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://appkerselsecurity.onrender.com/api';
 
-// Key names for localStorage - MUST match what Login.jsx uses
+// Key names for sessionStorage - MUST match what Login.jsx uses
+// Each tab has isolated sessionStorage, so multiple logins won't interfere
 const AUTH_TOKEN_KEY = 'kestrel_token';
 const REFRESH_TOKEN_KEY = 'refreshToken';
 const USER_KEY = 'kestrel_user';
@@ -70,11 +71,11 @@ export const authService = {
       const data = await response.json();
 
       // Store tokens and user info
-      localStorage.setItem(AUTH_TOKEN_KEY, data.token);
+      sessionStorage.setItem(AUTH_TOKEN_KEY, data.token);
       if (data.refreshToken) {
-        localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
+        sessionStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
       }
-      localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+      sessionStorage.setItem(USER_KEY, JSON.stringify(data.user));
 
       return {
         success: true,
@@ -92,7 +93,7 @@ export const authService = {
    */
   logout: async () => {
     try {
-      const token = localStorage.getItem(AUTH_TOKEN_KEY);
+      const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
 
       // Notify backend
       if (token) {
@@ -108,17 +109,17 @@ export const authService = {
       }
 
       // Clear local storage
-      localStorage.removeItem(AUTH_TOKEN_KEY);
-      localStorage.removeItem(REFRESH_TOKEN_KEY);
-      localStorage.removeItem(USER_KEY);
+      sessionStorage.removeItem(AUTH_TOKEN_KEY);
+      sessionStorage.removeItem(REFRESH_TOKEN_KEY);
+      sessionStorage.removeItem(USER_KEY);
 
       return { success: true };
     } catch (error) {
       console.error('Logout error:', error);
       // Clear anyway
-      localStorage.removeItem(AUTH_TOKEN_KEY);
-      localStorage.removeItem(REFRESH_TOKEN_KEY);
-      localStorage.removeItem(USER_KEY);
+      sessionStorage.removeItem(AUTH_TOKEN_KEY);
+      sessionStorage.removeItem(REFRESH_TOKEN_KEY);
+      sessionStorage.removeItem(USER_KEY);
       throw error;
     }
   },
@@ -127,7 +128,7 @@ export const authService = {
    * Get current user
    */
   getCurrentUser: () => {
-    const userStr = localStorage.getItem(USER_KEY);
+    const userStr = sessionStorage.getItem(USER_KEY);
     return userStr ? JSON.parse(userStr) : null;
   },
 
@@ -135,14 +136,14 @@ export const authService = {
    * Get auth token
    */
   getToken: () => {
-    return localStorage.getItem(AUTH_TOKEN_KEY);
+    return sessionStorage.getItem(AUTH_TOKEN_KEY);
   },
 
   /**
    * Check if user is authenticated
    */
   isAuthenticated: () => {
-    const token = localStorage.getItem(AUTH_TOKEN_KEY);
+    const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
     return token && !isTokenExpired(token);
   },
 
@@ -151,7 +152,7 @@ export const authService = {
    */
   refreshToken: async () => {
     try {
-      const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+      const refreshToken = sessionStorage.getItem(REFRESH_TOKEN_KEY);
       if (!refreshToken) {
         throw new Error('No refresh token available');
       }
@@ -169,7 +170,7 @@ export const authService = {
       }
 
       const data = await response.json();
-      localStorage.setItem(AUTH_TOKEN_KEY, data.token);
+      sessionStorage.setItem(AUTH_TOKEN_KEY, data.token);
 
       return {
         success: true,
@@ -188,7 +189,7 @@ export const authService = {
    */
   verifyToken: async () => {
     try {
-      const token = localStorage.getItem(AUTH_TOKEN_KEY);
+      const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
       if (!token) return false;
 
       const response = await fetch(`${API_BASE_URL}/auth/verify/`, {
@@ -239,7 +240,7 @@ export const authService = {
    */
   updateProfile: async (updates) => {
     try {
-      const token = localStorage.getItem(AUTH_TOKEN_KEY);
+      const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
       const response = await fetch(`${API_BASE_URL}/auth/profile/`, {
         method: 'PUT',
         headers: {
@@ -254,7 +255,7 @@ export const authService = {
       }
 
       const data = await response.json();
-      localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+      sessionStorage.setItem(USER_KEY, JSON.stringify(data.user));
 
       return {
         success: true,
@@ -273,7 +274,7 @@ export const authService = {
    */
   changePassword: async (currentPassword, newPassword) => {
     try {
-      const token = localStorage.getItem(AUTH_TOKEN_KEY);
+      const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
       const response = await fetch(`${API_BASE_URL}/auth/change-password/`, {
         method: 'POST',
         headers: {
@@ -351,7 +352,7 @@ export const authService = {
    */
   enableTwoFactor: async () => {
     try {
-      const token = localStorage.getItem(AUTH_TOKEN_KEY);
+      const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
       const response = await fetch(`${API_BASE_URL}/auth/2fa/setup/`, {
         method: 'POST',
         headers: {
@@ -381,7 +382,7 @@ export const authService = {
    */
   verifyTwoFactor: async (code) => {
     try {
-      const token = localStorage.getItem(AUTH_TOKEN_KEY);
+      const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
       const response = await fetch(`${API_BASE_URL}/auth/2fa/verify/`, {
         method: 'POST',
         headers: {

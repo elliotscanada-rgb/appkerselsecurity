@@ -9,11 +9,11 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://appkerselsecu
 // Helper function to get auth token
 const getAuthToken = () => {
   // Check localStorage for token (saved by Login.jsx)
-  const localToken = localStorage.getItem('kestrel_token');
+  const localToken = sessionStorage.getItem('kestrel_token');
   if (localToken) return localToken;
   
   // Fallback for older key names
-  const authToken = localStorage.getItem('authToken');
+  const authToken = sessionStorage.getItem('authToken');
   if (authToken) return authToken;
   
   return null;
@@ -25,8 +25,8 @@ const clearAuth = () => {
   sessionStorage.removeItem('refreshToken');
   sessionStorage.removeItem('kestrel_user');
   sessionStorage.removeItem('kestrel_session_id');
-  localStorage.removeItem('authToken');
-  localStorage.removeItem('refreshToken');
+  sessionStorage.removeItem('authToken');
+  sessionStorage.removeItem('refreshToken');
 };
 
 // Helper function for API requests with error handling

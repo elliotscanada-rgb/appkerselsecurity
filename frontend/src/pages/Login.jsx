@@ -22,7 +22,16 @@ const Login = () => {
     setLoading(true);
     setError('');
 
+    // Log device info for debugging
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    console.log('=== LOGIN ATTEMPT ===');
+    console.log('Device Type:', isMobile ? 'MOBILE' : 'DESKTOP');
+    console.log('User Agent:', navigator.userAgent);
+    console.log('API URL:', API_BASE_URL);
+    console.log('Email:', formData.email);
+
     try {
+      console.log('Sending login request...');
       const response = await fetch(`${API_BASE_URL}/auth/login/`, {
         method: 'POST',
         headers: { 
@@ -36,39 +45,74 @@ const Login = () => {
         }),
       });
 
-      console.log('Login Response Status:', response.status);
-      console.log('Login Response Headers:', response.headers);
+      console.log('Response Status:', response.status);
+      console.log('Response OK:', response.ok);
 
       if (!response.ok) {
         const data = await response.json();
-        console.error('Login error response:', data);
+        console.error('Login Failed - Status:', response.status);
+        console.error('Error Data:', data);
         
-        // More detailed error message for debugging
         const errorMsg = data.message || data.detail || data.error || 'Invalid email or password';
         throw new Error(errorMsg);
       }
 
       const data = await response.json();
-      console.log('Login successful, received token');
+      console.log('Login Successful - Token received');
+      console.log('User Role:', data.user?.role);
 
       if (data.token) {
-        // Use localStorage for mobile browser compatibility
+        // Test localStorage availability
+        try {
+          localStorage.setItem('test', 'test');
+          localStorage.removeItem('test');
+          console.log('localStorage: Available');
+        } catch (storageError) {
+          console.error('localStorage: NOT available!', storageError);
+          throw new Error('Storage not available on this browser. Please disable private browsing.');
+        }
+
+        // Store tokens
         localStorage.setItem('kestrel_token', data.token);
         localStorage.setItem('refreshToken', data.refresh || '');
         localStorage.setItem('kestrel_user', JSON.stringify(data.user));
 
-        console.log('Login successful:', data.user.email, 'Role:', data.user.role);
+        // Verify storage
+        const storedToken = localStorage.getItem('kestrel_token');
+        if (!storedToken) {
+          console.error('Token storage FAILED - stored but cannot retrieve');
+          throw new Error('Failed to store authentication. Please try again.');
+        }
+
+        console.log('Token stored successfully');
+        console.log('Redirecting to dashboard...');
         
         // Call login to update context and redirect
         login(data.user, data.token);
       } else {
+        console.error('No token in response');
         throw new Error('No token received from server');
       }
     } catch (err) {
-      console.error('Login exception:', err);
-      setError(err.message || 'Failed to login. Please try again.');
+      console.error('=== LOGIN ERROR ===');
+      console.error('Error Type:', err.name);
+      console.error('Error Message:', err.message);
+      console.error('Full Error:', err);
+      
+      // User-friendly error message
+      let userMessage = err.message || 'Failed to login. Please try again.';
+      
+      // Add specific messages for common mobile issues
+      if (err.message.includes('Failed to fetch') || err.message.includes('Network')) {
+        userMessage = 'Network error. Please check your internet connection.';
+      } else if (err.message.includes('Storage not available')) {
+        userMessage = 'Browser storage is disabled. Please disable private browsing mode.';
+      }
+      
+      setError(userMessage);
     } finally {
       setLoading(false);
+      console.log('=== LOGIN ATTEMPT END ===');
     }
   };
 

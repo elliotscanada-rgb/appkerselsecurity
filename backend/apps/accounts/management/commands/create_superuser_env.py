@@ -23,25 +23,29 @@ class Command(BaseCommand):
             )
             return
 
-        # Use get_or_create to safely handle existing users
-        user, created = User.objects.get_or_create(
-            email__iexact=email,
-            defaults={
-                'email': email,
-                'first_name': first_name,
-                'last_name': last_name,
-            }
-        )
+        # Normalize email the same way Django does
+        from django.contrib.auth.models import BaseUserManager
+        email = BaseUserManager.normalize_email(email)
 
-        # Always update permissions and password
-        user.is_staff = True
-        user.is_superuser = True
-        user.is_active = True
-        user.role = 'admin'
-        user.set_password(password)
-        user.save()
-
-        if created:
+        try:
+            user = User.objects.get(email=email)
+            # User exists — force update everything
+            user.is_staff = True
+            user.is_superuser = True
+            user.is_active = True
+            user.role = 'admin'
+            user.set_password(password)
+            user.save(update_fields=['is_staff', 'is_superuser', 'is_active', 'role', 'password'])
+            self.stdout.write(self.style.SUCCESS(
+                f'Superuser {email} updated: is_staff=True, is_superuser=True, password reset.'
+            ))
+        except User.DoesNotExist:
+            User.objects.create_superuser(
+                email=email,
+                password=password,
+                first_name=first_name,
+                last_name=last_name,
+            )
             self.stdout.write(self.style.SUCCESS(f'Superuser created: {email}'))
-        else:
-            self.stdout.write(self.style.SUCCESS(f'Superuser {email} updated with correct permissions and password.'))
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(f'Error: {e}'))

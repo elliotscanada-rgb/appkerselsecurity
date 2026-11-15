@@ -79,6 +79,7 @@ const Register = () => {
       };
       
       console.log('Sending registration request...');
+      console.log('Payload:', { ...payload, password: '***', password_confirm: '***' });
       
       const response = await fetch(`${API_BASE_URL}/auth/register/`, {
         method: 'POST',
@@ -116,38 +117,37 @@ const Register = () => {
       }
 
       const data = await response.json();
-      console.log('Registration successful:', data);
+      console.log('Registration successful - response received');
+      console.log('User role:', data.user?.role);
       
-      // Test localStorage availability
-      try {
-        localStorage.setItem('test', 'test');
-        localStorage.removeItem('test');
-        console.log('localStorage: Available');
-      } catch (storageError) {
-        console.error('localStorage: NOT available!', storageError);
-        throw new Error('Storage not available on this browser. Please disable private browsing.');
+      // Validate response
+      if (!data.token || !data.user) {
+        console.error('Invalid response structure:', data);
+        throw new Error('Invalid server response - missing token or user data');
       }
       
-      // Store token and user info using localStorage for mobile compatibility
-      if (data.token) {
+      // Store token and user info - using localStorage for consistency with Login page
+      try {
         localStorage.setItem('kestrel_token', data.token);
         localStorage.setItem('refreshToken', data.refresh || '');
         localStorage.setItem('kestrel_user', JSON.stringify(data.user));
 
         // Verify storage
         const storedToken = localStorage.getItem('kestrel_token');
-        if (!storedToken) {
-          console.error('Token storage FAILED - stored but cannot retrieve');
-          throw new Error('Failed to store authentication. Please try again.');
+        const storedUser = localStorage.getItem('kestrel_user');
+        
+        if (!storedToken || !storedUser) {
+          console.error('Token/User storage FAILED');
+          throw new Error('Failed to store authentication locally');
         }
 
-        console.log('Token stored successfully');
-        console.log('User registered and logged in:', data.user.email);
+        console.log('Token and user stored successfully');
+        console.log('User registered:', data.user.email, 'Role:', data.user.role);
         
         // Update auth context
         login(data.user, data.token);
         
-        setSuccess('Registration successful! Redirecting...');
+        setSuccess('Registration successful! Redirecting to dashboard...');
         
         // Navigate to dashboard after brief delay
         setTimeout(() => {
@@ -155,9 +155,9 @@ const Register = () => {
           console.log('Redirecting to:', redirectPath);
           navigate(redirectPath);
         }, 1500);
-      } else {
-        console.error('No token in response');
-        throw new Error('Registration succeeded but no token received');
+      } catch (storageErr) {
+        console.error('Storage error:', storageErr);
+        throw new Error('Browser storage unavailable - try disabling private browsing mode');
       }
     } catch (err) {
       console.error('=== REGISTRATION ERROR ===');
@@ -168,11 +168,13 @@ const Register = () => {
       // User-friendly error message
       let userMessage = err.message || 'Failed to register. Please try again.';
       
-      // Add specific messages for common mobile issues
+      // Add specific messages for common issues
       if (err.message.includes('Failed to fetch') || err.message.includes('Network')) {
-        userMessage = 'Network error. Please check your internet connection.';
-      } else if (err.message.includes('Storage not available')) {
+        userMessage = 'Network error. Please check your internet connection and try again.';
+      } else if (err.message.includes('Storage')) {
         userMessage = 'Browser storage is disabled. Please disable private browsing mode.';
+      } else if (err.message.includes('already exists')) {
+        userMessage = 'This email is already registered. Please use a different email or log in.';
       }
       
       setError(userMessage);

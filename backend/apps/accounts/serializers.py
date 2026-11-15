@@ -23,8 +23,8 @@ class RegisterSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
     password = serializers.CharField(write_only=True, min_length=8, required=True)
     password_confirm = serializers.CharField(write_only=True, min_length=8, required=True)
-    first_name = serializers.CharField(max_length=100, required=False, allow_blank=True)
-    last_name = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    first_name = serializers.CharField(max_length=100, required=True, allow_blank=False)
+    last_name = serializers.CharField(max_length=100, required=True, allow_blank=False)
     
     def validate_email(self, value):
         """Check if email already exists."""
@@ -32,6 +32,18 @@ class RegisterSerializer(serializers.Serializer):
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError("An account with this email already exists.")
         return value
+    
+    def validate_first_name(self, value):
+        """Validate first name."""
+        if not value or not value.strip():
+            raise serializers.ValidationError("First name is required and cannot be empty.")
+        return value.strip()
+    
+    def validate_last_name(self, value):
+        """Validate last name."""
+        if not value or not value.strip():
+            raise serializers.ValidationError("Last name is required and cannot be empty.")
+        return value.strip()
     
     def validate(self, attrs):
         password = attrs.get('password')
@@ -49,8 +61,14 @@ class RegisterSerializer(serializers.Serializer):
         # Extract data
         email = validated_data.get('email', '').strip().lower()
         password = validated_data.get('password')
-        first_name = validated_data.get('first_name', '')
-        last_name = validated_data.get('last_name', '')
+        first_name = validated_data.get('first_name', '').strip()
+        last_name = validated_data.get('last_name', '').strip()
+        
+        # Validate that names are provided
+        if not first_name:
+            raise serializers.ValidationError({"first_name": "First name is required."})
+        if not last_name:
+            raise serializers.ValidationError({"last_name": "Last name is required."})
         
         # Create the user
         user = User.objects.create_user(

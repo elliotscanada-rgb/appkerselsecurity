@@ -57,10 +57,10 @@ const ClientTrackingDashboard = () => {
       setLoading(true);
       setError(null);
 
-      // Fetch both consignments and shipments
+      // Fetch both consignments and client's own shipments using the new endpoint
       const [consignmentsRes, shipmentsRes] = await Promise.all([
         assetApi.getMyConsignments(),
-        shipmentApi.getShipments(),
+        shipmentApi.getMyShipments(), // Updated to use my_shipments endpoint
       ]);
 
       if (consignmentsRes && Array.isArray(consignmentsRes)) {

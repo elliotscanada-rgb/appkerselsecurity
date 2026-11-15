@@ -576,6 +576,36 @@ export const shipmentApi = {
       body: JSON.stringify(locationData),
     });
   },
+
+  /**
+   * Get client's own shipments
+   */
+  getMyShipments: async () => {
+    return apiRequest(`/shipments/my_shipments/`);
+  },
+
+  /**
+   * Get all in-transit shipments
+   */
+  getInTransitShipments: async () => {
+    return apiRequest(`/shipments/in_transit/`);
+  },
+
+  /**
+   * Get full tracking data with map coordinates
+   * @param {string} shipmentId - Shipment ID
+   */
+  getTrackingData: async (shipmentId) => {
+    return apiRequest(`/shipments/${shipmentId}/tracking_data/`);
+  },
+
+  /**
+   * Get location history for shipment
+   * @param {string} shipmentId - Shipment ID
+   */
+  getLocationHistory: async (shipmentId) => {
+    return apiRequest(`/shipments/${shipmentId}/location_history/`);
+  },
 };
 
 // =====================================================
@@ -1052,6 +1082,106 @@ export const clientApi = {
 };
 
 // =====================================================
+// DOCUMENT ENDPOINTS
+// =====================================================
+
+export const documentApi = {
+  /**
+   * Get all documents (admin)
+   * @param {Object} filters - Filter options
+   */
+  getDocuments: async (filters = {}) => {
+    const queryString = new URLSearchParams(filters).toString();
+    return apiRequest(`/documents/${queryString ? '?' + queryString : ''}`);
+  },
+
+  /**
+   * Get documents for a specific consignment
+   * @param {number} consignmentId - Consignment ID
+   */
+  getConsignmentDocuments: async (consignmentId) => {
+    return apiRequest(`/documents/by-consignment/${consignmentId}/`);
+  },
+
+  /**
+   * Get single document by ID
+   * @param {number} documentId - Document ID
+   */
+  getDocument: async (documentId) => {
+    return apiRequest(`/documents/${documentId}/`);
+  },
+
+  /**
+   * Upload document with description (multipart/form-data)
+   * @param {FormData} formData - Form data with consignment, document_type, description, file
+   */
+  uploadDocument: async (formData) => {
+    const url = `${API_BASE_URL}/documents/`;
+    
+    const defaultHeaders = {};
+    const token = getAuthToken();
+    if (token) {
+      defaultHeaders['Authorization'] = `Bearer ${token}`;
+    }
+
+    const config = {
+      method: 'POST',
+      headers: defaultHeaders,
+      body: formData,
+    };
+
+    try {
+      const response = await fetch(url, config);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || errorData.detail || `Upload failed: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Document upload failed:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Update document details
+   * @param {number} documentId - Document ID
+   * @param {Object} updates - Fields to update
+   */
+  updateDocument: async (documentId, updates) => {
+    return apiRequest(`/documents/${documentId}/`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+  },
+
+  /**
+   * Delete document
+   * @param {number} documentId - Document ID
+   */
+  deleteDocument: async (documentId) => {
+    return apiRequest(`/documents/${documentId}/`, {
+      method: 'DELETE',
+    });
+  },
+
+  /**
+   * Download document file
+   * @param {number} documentId - Document ID
+   */
+  downloadDocument: async (documentId) => {
+    const doc = await apiRequest(`/documents/${documentId}/`);
+    if (doc.file) {
+      // Open in new tab to trigger download
+      window.open(doc.file, '_blank');
+    }
+    return doc;
+  },
+};
+
+// =====================================================
 // AUDIT LOG ENDPOINTS
 // =====================================================
 
@@ -1107,6 +1237,7 @@ export default {
   locationApi,
   custodyApi,
   consignmentApi,
+  documentApi,
   searchApi,
   reportingApi,
   notificationApi,

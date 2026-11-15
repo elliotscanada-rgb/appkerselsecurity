@@ -5,10 +5,10 @@
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://appkerselsecurity.onrender.com/api';
 
-// Key names for localStorage
-const AUTH_TOKEN_KEY = 'authToken';
+// Key names for localStorage - MUST match what Login.jsx uses
+const AUTH_TOKEN_KEY = 'kestrel_token';
 const REFRESH_TOKEN_KEY = 'refreshToken';
-const USER_KEY = 'currentUser';
+const USER_KEY = 'kestrel_user';
 
 // Token expiration time (in ms) - used for local refresh
 const TOKEN_EXPIRY_BUFFER = 5 * 60 * 1000; // 5 minutes before actual expiry

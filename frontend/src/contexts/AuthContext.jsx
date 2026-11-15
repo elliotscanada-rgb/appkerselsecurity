@@ -26,8 +26,8 @@ export const AuthProvider = ({ children }) => {
   // Check for existing session on mount
   useEffect(() => {
     const initializeAuth = () => {
-      const storedUser = sessionStorage.getItem('kestrel_user');
-      const token = sessionStorage.getItem('kestrel_token');
+      const storedUser = localStorage.getItem('kestrel_user');
+      const token = localStorage.getItem('kestrel_token');
 
       console.log('AuthContext Init - Session ID:', sessionId);
       console.log('AuthContext Init - Stored User:', storedUser ? 'YES' : 'NO');
@@ -40,8 +40,8 @@ export const AuthProvider = ({ children }) => {
           console.log('AuthContext Init - Loaded user:', parsedUser.email, parsedUser.role);
         } catch (error) {
           console.error('Failed to parse stored user:', error);
-          sessionStorage.removeItem('kestrel_user');
-          sessionStorage.removeItem('kestrel_token');
+          localStorage.removeItem('kestrel_user');
+          localStorage.removeItem('kestrel_token');
           setUser(null);
         }
       }
@@ -55,10 +55,10 @@ export const AuthProvider = ({ children }) => {
   const login = (userData, token) => {
     console.log('Login - User:', userData.email, 'Role:', userData.role, 'Session:', sessionId);
     
-    // Use sessionStorage for tokens (each tab is isolated)
-    sessionStorage.setItem('kestrel_user', JSON.stringify(userData));
-    sessionStorage.setItem('kestrel_token', token);
-    sessionStorage.setItem('kestrel_session_id', sessionId);
+    // Use localStorage for mobile compatibility
+    localStorage.setItem('kestrel_user', JSON.stringify(userData));
+    localStorage.setItem('kestrel_token', token);
+    localStorage.setItem('kestrel_session_id', sessionId);
     setUser(userData);
 
     // Redirect based on role
@@ -80,18 +80,18 @@ export const AuthProvider = ({ children }) => {
   // Logout function
   const logout = () => {
     console.log('Logout - Session:', sessionId);
-    // Use sessionStorage (each tab is isolated)
-    sessionStorage.removeItem('kestrel_user');
-    sessionStorage.removeItem('kestrel_token');
-    sessionStorage.removeItem('refreshToken');
-    sessionStorage.removeItem('kestrel_session_id');
+    // Use localStorage for mobile compatibility
+    localStorage.removeItem('kestrel_user');
+    localStorage.removeItem('kestrel_token');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('kestrel_session_id');
     setUser(null);
     navigate('/login');
   };
 
   // Get authentication token
   const getToken = () => {
-    return sessionStorage.getItem('kestrel_token');
+    return localStorage.getItem('kestrel_token');
   };
 
   // Check if user is authenticated

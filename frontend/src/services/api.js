@@ -12,7 +12,8 @@ const api = axios.create({
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
-    const token = sessionStorage.getItem('kestrel_token');
+    // Use localStorage instead of sessionStorage for mobile compatibility
+    const token = localStorage.getItem('kestrel_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -29,8 +30,8 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Unauthorized - clear storage and redirect to login
-      sessionStorage.removeItem('kestrel_user');
-      sessionStorage.removeItem('kestrel_token');
+      localStorage.removeItem('kestrel_user');
+      localStorage.removeItem('kestrel_token');
       window.location.href = '/login';
     }
     return Promise.reject(error);

@@ -5,8 +5,8 @@
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://appkerselsecurity.onrender.com/api';
 
-// Key names for sessionStorage - MUST match what Login.jsx uses
-// Each tab has isolated sessionStorage, so multiple logins won't interfere
+// Key names for localStorage - MUST match what Login.jsx uses
+// Using localStorage for better mobile browser compatibility
 const AUTH_TOKEN_KEY = 'kestrel_token';
 const REFRESH_TOKEN_KEY = 'refreshToken';
 const USER_KEY = 'kestrel_user';
@@ -70,12 +70,12 @@ export const authService = {
 
       const data = await response.json();
 
-      // Store tokens and user info
-      sessionStorage.setItem(AUTH_TOKEN_KEY, data.token);
+      // Store tokens and user info in localStorage for mobile compatibility
+      localStorage.setItem(AUTH_TOKEN_KEY, data.token);
       if (data.refreshToken) {
-        sessionStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
+        localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
       }
-      sessionStorage.setItem(USER_KEY, JSON.stringify(data.user));
+      localStorage.setItem(USER_KEY, JSON.stringify(data.user));
 
       return {
         success: true,
@@ -109,17 +109,17 @@ export const authService = {
       }
 
       // Clear local storage
-      sessionStorage.removeItem(AUTH_TOKEN_KEY);
-      sessionStorage.removeItem(REFRESH_TOKEN_KEY);
-      sessionStorage.removeItem(USER_KEY);
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+      localStorage.removeItem(REFRESH_TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
 
       return { success: true };
     } catch (error) {
       console.error('Logout error:', error);
       // Clear anyway
-      sessionStorage.removeItem(AUTH_TOKEN_KEY);
-      sessionStorage.removeItem(REFRESH_TOKEN_KEY);
-      sessionStorage.removeItem(USER_KEY);
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+      localStorage.removeItem(REFRESH_TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
       throw error;
     }
   },
@@ -128,7 +128,7 @@ export const authService = {
    * Get current user
    */
   getCurrentUser: () => {
-    const userStr = sessionStorage.getItem(USER_KEY);
+    const userStr = localStorage.getItem(USER_KEY);
     return userStr ? JSON.parse(userStr) : null;
   },
 
@@ -136,7 +136,7 @@ export const authService = {
    * Get auth token
    */
   getToken: () => {
-    return sessionStorage.getItem(AUTH_TOKEN_KEY);
+    return localStorage.getItem(AUTH_TOKEN_KEY);
   },
 
   /**

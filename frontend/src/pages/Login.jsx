@@ -52,10 +52,10 @@ const Login = () => {
       console.log('Login successful, received token');
 
       if (data.token) {
-        // Use sessionStorage for tokens (each tab is isolated)
-        sessionStorage.setItem('kestrel_token', data.token);
-        sessionStorage.setItem('refreshToken', data.refresh || '');
-        sessionStorage.setItem('kestrel_user', JSON.stringify(data.user));
+        // Use localStorage for mobile browser compatibility
+        localStorage.setItem('kestrel_token', data.token);
+        localStorage.setItem('refreshToken', data.refresh || '');
+        localStorage.setItem('kestrel_user', JSON.stringify(data.user));
 
         console.log('Login successful:', data.user.email, 'Role:', data.user.role);
         

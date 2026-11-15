@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Login Test - Kestrel Security</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0f1923;
+            color: white;
+            padding: 20px;
+            font-size: 14px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #D4AF37;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #ccc;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            background: #1a2332;
+            border: 1px solid #333;
+            border-radius: 5px;
+            color: white;
+            font-size: 16px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #D4AF37;
+            border: none;
+            border-radius: 5px;
+            color: black;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+        }
+        
+        .log {
+            margin-top: 20px;
+            padding: 15px;
+            background: #1a2332;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 11px;
+            max-height: 400px;
+            overflow-y: auto;
+            line-height: 1.6;
+        }
+        
+        .log-entry {
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #333;
+        }
+        
+        .log-time {
+            color: #888;
+        }
+        
+        .log-success {
+            color: #4ade80;
+        }
+        
+        .log-error {
+            color: #f87171;
+        }
+        
+        .log-info {
+            color: #60a5fa;
+        }
+        
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .status-success {
+            background: #064e3b;
+            color: #4ade80;
+        }
+        
+        .status-error {
+            background: #7f1d1d;
+            color: #f87171;
+        }
+        
+        .diagnostic {
+            margin-top: 20px;
+            padding: 15px;
+            background: #1e293b;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+        
+        .diagnostic-item {
+            padding: 8px;
+            margin: 5px 0;
+            background: #0f1923;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Mobile Login Diagnostic Test</h1>
+        
+        <div id="status"></div>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" id="email" value="admin@kestrel.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Password:</label>
+                <input type="password" id="password" value="admin123" required>
+            </div>
+            
+            <button type="submit" id="loginBtn">Test Login</button>
+            <button type="button" id="diagnosticBtn">Run Diagnostics</button>
+            <button type="button" id="clearBtn">Clear Log</button>
+        </form>
+        
+        <div id="diagnostic" class="diagnostic" style="display:none;"></div>
+        
+        <div class="log" id="log">
+            <div class="log-entry log-info">
+                Waiting for test...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://appkerselsecurity.onrender.com/api';
+        const log = document.getElementById('log');
+        const status = document.getElementById('status');
+        const diagnostic = document.getElementById('diagnostic');
+
+        function addLog(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.innerHTML = `
+                <div class="log-time">${new Date().toLocaleTimeString()}</div>
+                <div>${message}</div>
+            `;
+            log.insertBefore(entry, log.firstChild);
+        }
+
+        function showStatus(message, isError = false) {
+            status.innerHTML = `<div class="status ${isError ? 'status-error' : 'status-success'}">${message}</div>`;
+        }
+
+        // Device Info
+        addLog(`Device: ${navigator.userAgent}`, 'info');
+        addLog(`Platform: ${navigator.platform}`, 'info');
+        addLog(`Online: ${navigator.onLine}`, 'info');
+
+        // Test localStorage
+        try {
+            localStorage.setItem('test', 'test');
+            localStorage.removeItem('test');
+            addLog('✅ localStorage: Working', 'success');
+        } catch (e) {
+            addLog(`❌ localStorage: ${e.message}`, 'error');
+        }
+
+        // Test sessionStorage
+        try {
+            sessionStorage.setItem('test', 'test');
+            sessionStorage.removeItem('test');
+            addLog('✅ sessionStorage: Working', 'success');
+        } catch (e) {
+            addLog(`❌ sessionStorage: ${e.message}`, 'error');
+        }
+
+        // Login Form
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+            
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Testing...';
+            
+            addLog('🔄 Starting login test...', 'info');
+            addLog(`Email: ${email}`, 'info');
+            addLog(`API URL: ${API_URL}/auth/login/`, 'info');
+
+            try {
+                // Test 1: Can we reach the server?
+                addLog('📡 Testing server connection...', 'info');
+                
+                const response = await fetch(`${API_URL}/auth/login/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password })
+                });
+
+                addLog(`Status: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+                addLog(`Headers: ${JSON.stringify([...response.headers.entries()])}`, 'info');
+
+                // Get response body
+                const data = await response.json();
+                addLog(`Response: ${JSON.stringify(data, null, 2)}`, response.ok ? 'success' : 'error');
+
+                if (response.ok && data.token) {
+                    // Test storing token
+                    addLog('💾 Testing token storage...', 'info');
+                    
+                    try {
+                        localStorage.setItem('kestrel_token', data.token);
+                        localStorage.setItem('kestrel_user', JSON.stringify(data.user));
+                        addLog('✅ Token saved to localStorage', 'success');
+                        
+                        const retrieved = localStorage.getItem('kestrel_token');
+                        if (retrieved === data.token) {
+                            addLog('✅ Token retrieved successfully', 'success');
+                            showStatus('✅ LOGIN SUCCESSFUL! Token stored correctly.', false);
+                        } else {
+                            addLog('❌ Token retrieval failed', 'error');
+                            showStatus('❌ Token storage verification failed', true);
+                        }
+                    } catch (e) {
+                        addLog(`❌ Storage error: ${e.message}`, 'error');
+                        showStatus(`❌ Storage failed: ${e.message}`, true);
+                    }
+                } else {
+                    addLog(`❌ Login failed: ${data.message || data.detail || 'Unknown error'}`, 'error');
+                    showStatus(`❌ Login failed: ${data.message || data.detail}`, true);
+                }
+
+            } catch (error) {
+                addLog(`❌ Network error: ${error.message}`, 'error');
+                addLog(`Error stack: ${error.stack}`, 'error');
+                showStatus(`❌ Network error: ${error.message}`, true);
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Test Login';
+            }
+        });
+
+        // Diagnostics
+        document.getElementById('diagnosticBtn').addEventListener('click', async () => {
+            diagnostic.style.display = 'block';
+            diagnostic.innerHTML = '<h3>System Diagnostics:</h3>';
+
+            const tests = [
+                {
+                    name: 'User Agent',
+                    value: navigator.userAgent
+                },
+                {
+                    name: 'Platform',
+                    value: navigator.platform
+                },
+                {
+                    name: 'Language',
+                    value: navigator.language
+                },
+                {
+                    name: 'Cookies Enabled',
+                    value: navigator.cookieEnabled ? '✅ Yes' : '❌ No'
+                },
+                {
+                    name: 'Online Status',
+                    value: navigator.onLine ? '✅ Online' : '❌ Offline'
+                },
+                {
+                    name: 'Screen Size',
+                    value: `${window.screen.width}x${window.screen.height}`
+                },
+                {
+                    name: 'Window Size',
+                    value: `${window.innerWidth}x${window.innerHeight}`
+                },
+                {
+                    name: 'localStorage Available',
+                    value: typeof localStorage !== 'undefined' ? '✅ Yes' : '❌ No'
+                },
+                {
+                    name: 'sessionStorage Available',
+                    value: typeof sessionStorage !== 'undefined' ? '✅ Yes' : '❌ No'
+                },
+                {
+                    name: 'Current Protocol',
+                    value: window.location.protocol
+                },
+                {
+                    name: 'Current Host',
+                    value: window.location.host
+                },
+            ];
+
+            tests.forEach(test => {
+                const item = document.createElement('div');
+                item.className = 'diagnostic-item';
+                item.innerHTML = `<strong>${test.name}:</strong> ${test.value}`;
+                diagnostic.appendChild(item);
+            });
+
+            // Test API connection
+            addLog('Testing API connection...', 'info');
+            try {
+                const response = await fetch(`${API_URL}/auth/login/`, {
+                    method: 'OPTIONS'
+                });
+                addLog(`✅ API reachable (status: ${response.status})`, 'success');
+                
+                const item = document.createElement('div');
+                item.className = 'diagnostic-item';
+                item.innerHTML = `<strong>API Status:</strong> ✅ Reachable (${response.status})`;
+                diagnostic.appendChild(item);
+            } catch (e) {
+                addLog(`❌ API unreachable: ${e.message}`, 'error');
+                
+                const item = document.createElement('div');
+                item.className = 'diagnostic-item';
+                item.innerHTML = `<strong>API Status:</strong> ❌ Unreachable (${e.message})`;
+                diagnostic.appendChild(item);
+            }
+        });
+
+        // Clear log
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            log.innerHTML = '<div class="log-entry log-info">Log cleared...</div>';
+            status.innerHTML = '';
+            diagnostic.style.display = 'none';
+        });
+
+        // Auto-run diagnostics on load
+        document.getElementById('diagnosticBtn').click();
+    </script>
+</body>
+</html>

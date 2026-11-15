@@ -36,12 +36,20 @@ const Login = () => {
         }),
       });
 
+      console.log('Login Response Status:', response.status);
+      console.log('Login Response Headers:', response.headers);
+
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || data.detail || 'Invalid email or password');
+        console.error('Login error response:', data);
+        
+        // More detailed error message for debugging
+        const errorMsg = data.message || data.detail || data.error || 'Invalid email or password';
+        throw new Error(errorMsg);
       }
 
       const data = await response.json();
+      console.log('Login successful, received token');
 
       if (data.token) {
         // Use sessionStorage for tokens (each tab is isolated)
@@ -57,6 +65,7 @@ const Login = () => {
         throw new Error('No token received from server');
       }
     } catch (err) {
+      console.error('Login exception:', err);
       setError(err.message || 'Failed to login. Please try again.');
     } finally {
       setLoading(false);

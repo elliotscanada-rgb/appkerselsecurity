@@ -244,6 +244,10 @@ CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:3000',
     'https://app.kestrelsecuritycompany.com',
     'http://app.kestrelsecuritycompany.com',
+    'https://kerselsecuritycompany.vercel.app',
+    'http://kerselsecuritycompany.vercel.app',
+    'https://kerselsecurity-o5ym.vercel.app',
+    'http://kerselsecurity-o5ym.vercel.app',
 ]
 
 # Try to load from env if available
@@ -265,6 +269,16 @@ CORS_ALLOW_HEADERS = [
     'user-agent',
     'x-csrftoken',
     'x-requested-with',
+]
+
+# Allow preflight requests from mobile browsers
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
 ]
 
 # File Upload Settings

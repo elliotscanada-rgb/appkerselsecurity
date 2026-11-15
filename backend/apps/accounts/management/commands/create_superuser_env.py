@@ -23,28 +23,25 @@ class Command(BaseCommand):
             )
             return
 
-        try:
-            if User.objects.filter(email=email).exists():
-                # User exists — make sure they have correct permissions and password
-                user = User.objects.get(email=email)
-                user.is_staff = True
-                user.is_superuser = True
-                user.is_active = True
-                user.role = 'admin'
-                user.set_password(password)
-                user.save()
-                self.stdout.write(
-                    self.style.SUCCESS(f'Superuser {email} updated with correct permissions.')
-                )
-            else:
-                user = User.objects.create_superuser(
-                    email=email,
-                    password=password,
-                    first_name=first_name,
-                    last_name=last_name,
-                )
-                self.stdout.write(self.style.SUCCESS(f'Superuser created: {email}'))
-        except Exception as e:
-            self.stdout.write(
-                self.style.WARNING(f'Superuser command error: {e}')
-            )
+        # Use get_or_create to safely handle existing users
+        user, created = User.objects.get_or_create(
+            email__iexact=email,
+            defaults={
+                'email': email,
+                'first_name': first_name,
+                'last_name': last_name,
+            }
+        )
+
+        # Always update permissions and password
+        user.is_staff = True
+        user.is_superuser = True
+        user.is_active = True
+        user.role = 'admin'
+        user.set_password(password)
+        user.save()
+
+        if created:
+            self.stdout.write(self.style.SUCCESS(f'Superuser created: {email}'))
+        else:
+            self.stdout.write(self.style.SUCCESS(f'Superuser {email} updated with correct permissions and password.'))

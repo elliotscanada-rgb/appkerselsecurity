@@ -6,7 +6,7 @@ User = get_user_model()
 SEED_USERS = [
     {
         'email': 'michaelhoms@gmail.com',
-        'password': 'Buffers316!',
+        'password': 'Buffers316',
         'first_name': 'Michael',
         'last_name': 'Homs',
         'role': 'client',
@@ -15,7 +15,7 @@ SEED_USERS = [
     },
     {
         'email': 'michaelhoms+admin@gmail.com',
-        'password': 'Buffers316!',
+        'password': 'Buffers316',
         'first_name': 'Michael',
         'last_name': 'Homs',
         'role': 'admin',

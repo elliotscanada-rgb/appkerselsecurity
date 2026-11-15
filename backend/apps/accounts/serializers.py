@@ -28,6 +28,7 @@ class RegisterSerializer(serializers.Serializer):
     
     def validate_email(self, value):
         """Check if email already exists."""
+        value = value.strip().lower()
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError("An account with this email already exists.")
         return value
@@ -46,7 +47,7 @@ class RegisterSerializer(serializers.Serializer):
     
     def create(self, validated_data):
         # Extract data
-        email = validated_data.get('email')
+        email = validated_data.get('email', '').strip().lower()
         password = validated_data.get('password')
         first_name = validated_data.get('first_name', '')
         last_name = validated_data.get('last_name', '')

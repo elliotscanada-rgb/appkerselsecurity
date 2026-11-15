@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaShieldAlt, FaSpinner } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../utils/constants';
 
@@ -251,9 +251,20 @@ const Login = () => {
             </button>
           </form>
 
-          <p className="text-center text-xs text-gray-600 mt-8">
-            Contact your administrator if you need access.
-          </p>
+          <div className="mt-6 text-center space-y-3">
+            <p className="text-sm text-gray-400">
+              Don't have an account?{' '}
+              <Link
+                to="/register"
+                className="text-kestrel-gold hover:text-kestrel-gold/80 font-semibold transition-colors"
+              >
+                Create Account
+              </Link>
+            </p>
+            <p className="text-xs text-gray-600">
+              Contact your administrator if you need access.
+            </p>
+          </div>
         </div>
       </div>
     </div>

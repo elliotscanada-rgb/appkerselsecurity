@@ -61,6 +61,13 @@ const Register = () => {
     setError('');
     setSuccess('');
 
+    // Log device info for debugging
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    console.log('=== REGISTRATION ATTEMPT ===');
+    console.log('Device Type:', isMobile ? 'MOBILE' : 'DESKTOP');
+    console.log('User Agent:', navigator.userAgent);
+    console.log('API URL:', API_BASE_URL);
+
     try {
       // Call backend registration API
       const payload = {
@@ -71,19 +78,25 @@ const Register = () => {
         password_confirm: formData.password_confirm,
       };
       
-      console.log('Sending registration payload:', payload);
+      console.log('Sending registration request...');
       
       const response = await fetch(`${API_BASE_URL}/auth/register/`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
         body: JSON.stringify(payload),
       });
 
+      console.log('Response Status:', response.status);
+      console.log('Response OK:', response.ok);
+
       if (!response.ok) {
         const data = await response.json();
-        
-        // Log the full error response for debugging
-        console.error('Registration API error response:', data);
+        console.error('Registration Failed - Status:', response.status);
+        console.error('Error Data:', data);
         
         // Handle specific field errors
         if (typeof data === 'object') {
@@ -99,17 +112,37 @@ const Register = () => {
           throw new Error(errorMessages || 'Registration failed');
         }
         
-        throw new Error(data.message || 'Registration failed');
+        throw new Error(data.message || data.detail || 'Registration failed');
       }
 
       const data = await response.json();
+      console.log('Registration successful:', data);
       
-      // Store token and user info
+      // Test localStorage availability
+      try {
+        localStorage.setItem('test', 'test');
+        localStorage.removeItem('test');
+        console.log('localStorage: Available');
+      } catch (storageError) {
+        console.error('localStorage: NOT available!', storageError);
+        throw new Error('Storage not available on this browser. Please disable private browsing.');
+      }
+      
+      // Store token and user info using localStorage for mobile compatibility
       if (data.token) {
-        sessionStorage.setItem('authToken', data.token);
-        sessionStorage.setItem('kestrel_token', data.token);
-        sessionStorage.setItem('refreshToken', data.refresh);
-        sessionStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('kestrel_token', data.token);
+        localStorage.setItem('refreshToken', data.refresh || '');
+        localStorage.setItem('kestrel_user', JSON.stringify(data.user));
+
+        // Verify storage
+        const storedToken = localStorage.getItem('kestrel_token');
+        if (!storedToken) {
+          console.error('Token storage FAILED - stored but cannot retrieve');
+          throw new Error('Failed to store authentication. Please try again.');
+        }
+
+        console.log('Token stored successfully');
+        console.log('User registered and logged in:', data.user.email);
         
         // Update auth context
         login(data.user, data.token);
@@ -119,14 +152,33 @@ const Register = () => {
         // Navigate to dashboard after brief delay
         setTimeout(() => {
           const redirectPath = data.user.role === 'admin' ? '/admin/dashboard' : '/client/dashboard';
+          console.log('Redirecting to:', redirectPath);
           navigate(redirectPath);
         }, 1500);
+      } else {
+        console.error('No token in response');
+        throw new Error('Registration succeeded but no token received');
       }
     } catch (err) {
-      console.error('Registration error:', err);
-      setError(err.message || 'Failed to register. Please try again.');
+      console.error('=== REGISTRATION ERROR ===');
+      console.error('Error Type:', err.name);
+      console.error('Error Message:', err.message);
+      console.error('Full Error:', err);
+      
+      // User-friendly error message
+      let userMessage = err.message || 'Failed to register. Please try again.';
+      
+      // Add specific messages for common mobile issues
+      if (err.message.includes('Failed to fetch') || err.message.includes('Network')) {
+        userMessage = 'Network error. Please check your internet connection.';
+      } else if (err.message.includes('Storage not available')) {
+        userMessage = 'Browser storage is disabled. Please disable private browsing mode.';
+      }
+      
+      setError(userMessage);
     } finally {
       setLoading(false);
+      console.log('=== REGISTRATION ATTEMPT END ===');
     }
   };
 

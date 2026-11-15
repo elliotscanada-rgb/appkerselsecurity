@@ -12,11 +12,11 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sessionId] = useState(() => {
-    // Try to get existing session ID from sessionStorage
-    let id = sessionStorage.getItem('kestrel_session_id');
+    // Try to get existing session ID from localStorage (changed from sessionStorage for mobile compatibility)
+    let id = localStorage.getItem('kestrel_session_id');
     if (!id) {
       id = generateSessionId();
-      sessionStorage.setItem('kestrel_session_id', id);
+      localStorage.setItem('kestrel_session_id', id);
     }
     console.log('Session ID:', id);
     return id;
@@ -26,8 +26,8 @@ export const AuthProvider = ({ children }) => {
   // Check for existing session on mount
   useEffect(() => {
     const initializeAuth = () => {
-      const storedUser = sessionStorage.getItem('kestrel_user');
-      const token = sessionStorage.getItem('kestrel_token');
+      const storedUser = localStorage.getItem('kestrel_user');
+      const token = localStorage.getItem('kestrel_token');
 
       console.log('AuthContext Init - Session ID:', sessionId);
       console.log('AuthContext Init - Stored User:', storedUser ? 'YES' : 'NO');
@@ -40,8 +40,8 @@ export const AuthProvider = ({ children }) => {
           console.log('AuthContext Init - Loaded user:', parsedUser.email, parsedUser.role);
         } catch (error) {
           console.error('Failed to parse stored user:', error);
-          sessionStorage.removeItem('kestrel_user');
-          sessionStorage.removeItem('kestrel_token');
+          localStorage.removeItem('kestrel_user');
+          localStorage.removeItem('kestrel_token');
           setUser(null);
         }
       }
@@ -55,9 +55,9 @@ export const AuthProvider = ({ children }) => {
   const login = (userData, token) => {
     console.log('Login - User:', userData.email, 'Role:', userData.role, 'Session:', sessionId);
     
-    sessionStorage.setItem('kestrel_user', JSON.stringify(userData));
-    sessionStorage.setItem('kestrel_token', token);
-    sessionStorage.setItem('kestrel_session_id', sessionId);
+    localStorage.setItem('kestrel_user', JSON.stringify(userData));
+    localStorage.setItem('kestrel_token', token);
+    localStorage.setItem('kestrel_session_id', sessionId);
     setUser(userData);
 
     // Redirect based on role
@@ -79,15 +79,17 @@ export const AuthProvider = ({ children }) => {
   // Logout function
   const logout = () => {
     console.log('Logout - Session:', sessionId);
-    sessionStorage.removeItem('kestrel_user');
-    sessionStorage.removeItem('kestrel_token');
+    localStorage.removeItem('kestrel_user');
+    localStorage.removeItem('kestrel_token');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('kestrel_session_id');
     setUser(null);
     navigate('/login');
   };
 
   // Get authentication token
   const getToken = () => {
-    return sessionStorage.getItem('kestrel_token');
+    return localStorage.getItem('kestrel_token');
   };
 
   // Check if user is authenticated

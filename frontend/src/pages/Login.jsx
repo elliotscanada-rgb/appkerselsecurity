@@ -25,7 +25,11 @@ const Login = () => {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login/`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include', // Important for mobile browsers
         body: JSON.stringify({
           email: formData.email,
           password: formData.password,
@@ -40,9 +44,10 @@ const Login = () => {
       const data = await response.json();
 
       if (data.token) {
-        sessionStorage.setItem('kestrel_token', data.token);
-        sessionStorage.setItem('refreshToken', data.refresh);
-        sessionStorage.setItem('kestrel_user', JSON.stringify(data.user));
+        // Use localStorage for better mobile compatibility
+        localStorage.setItem('kestrel_token', data.token);
+        localStorage.setItem('refreshToken', data.refresh);
+        localStorage.setItem('kestrel_user', JSON.stringify(data.user));
 
         login(data.user, data.token);
 

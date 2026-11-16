@@ -44,7 +44,7 @@ const CustodyPage = () => {
     const fetchCustodyRecords = async () => {
       try {
         setLoading(true);
-        const token = sessionStorage.getItem('kestrel_token');
+        const token = sessionStorage.getItem('kestrel_token') || localStorage.getItem('kestrel_token');
         
         if (!token) {
           setError('No authentication token found');
@@ -85,8 +85,13 @@ const CustodyPage = () => {
     }
 
     try {
-      const token = sessionStorage.getItem('kestrel_token');
+      const token = sessionStorage.getItem('kestrel_token') || localStorage.getItem('kestrel_token');
       
+      if (!token) {
+        alert('No authentication token found. Please log in again.');
+        return;
+      }
+
       const response = await fetch(`${API_BASE_URL}/custody/transfer/`, {
         method: 'POST',
         headers: {
@@ -108,7 +113,8 @@ const CustodyPage = () => {
         // Refresh the list
         window.location.reload();
       } else {
-        alert('Failed to record custody transfer');
+        const errData = await response.json();
+        alert('Failed to record custody transfer: ' + (errData.error || 'Unknown error'));
       }
     } catch (err) {
       console.error('Error recording transfer:', err);

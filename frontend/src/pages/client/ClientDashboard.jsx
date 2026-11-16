@@ -369,8 +369,8 @@ const ClientDashboard = () => {
                         </div>
                       </div>
 
-                      {/* Asset Details Grid - PHYSICAL SPECS ONLY */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
+                      {/* Asset Details Grid - GOLD WEIGHT ONLY */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 mb-4">
                         <div className="min-w-0 overflow-hidden">
                           <p className="text-xs text-gray-500 truncate">Weight</p>
                           <p className="font-semibold text-xs sm:text-sm text-gray-200 break-words">{formatWeight(asset.weight, asset.weightUnit)}</p>
@@ -383,32 +383,10 @@ const ClientDashboard = () => {
                           <p className="text-xs text-gray-500 truncate">Quantity</p>
                           <p className="font-semibold text-xs sm:text-sm text-gray-200 break-words">{asset.quantity}</p>
                         </div>
-                        <div className="min-w-0 overflow-hidden">
-                          <p className="text-xs text-gray-500 truncate">Category</p>
-                          <p className="font-semibold text-xs sm:text-sm text-gray-200 break-words">{asset.category_display || asset.category}</p>
-                        </div>
                       </div>
 
-                      {/* Deposit Information */}
-                      <div className="bg-blue-900/30 border-l-4 border-blue-500 rounded-lg p-3 mb-4 overflow-hidden">
-                        <p className="text-xs text-blue-400 font-semibold mb-2 uppercase tracking-wide truncate">Deposit Information</p>
-                        <div className="grid grid-cols-3 gap-2">
-                          <div className="min-w-0 overflow-hidden">
-                            <p className="text-xs text-blue-400 truncate">Date</p>
-                            <p className="font-semibold text-xs sm:text-sm text-blue-200 break-words">{formatDate(asset.receivedDate, 'MMM dd')}</p>
-                          </div>
-                          <div className="min-w-0 overflow-hidden">
-                            <p className="text-xs text-blue-400 truncate">Year</p>
-                            <p className="font-semibold text-xs sm:text-sm text-blue-200">{formatDate(asset.receivedDate, 'yyyy')}</p>
-                          </div>
-                          <div className="min-w-0 overflow-hidden">
-                            <p className="text-xs text-blue-400 truncate">Days</p>
-                            <p className="font-semibold text-xs sm:text-sm text-blue-200">{Math.floor((new Date() - new Date(asset.receivedDate)) / (1000 * 60 * 60 * 24))}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Fees Section */}
+                      {/* Fees Section - Hidden, kept in data but not displayed */}
+                      {false && (
                       <div className="border-t border-gray-700 pt-4 overflow-hidden">
                         <h4 className="font-semibold text-gray-300 mb-3 flex items-center gap-2 truncate">
                           <FaCoins className="text-cyan-400 flex-shrink-0" />
@@ -455,6 +433,7 @@ const ClientDashboard = () => {
                           )}
                         </div>
                       </div>
+                      )}
 
                       {/* Action Buttons */}
                       <div className="flex flex-col sm:flex-row gap-2 mt-4">

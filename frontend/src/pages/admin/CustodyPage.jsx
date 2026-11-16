@@ -200,6 +200,7 @@ const CustodyPage = () => {
       }
 
       // Process each step
+      const createdStepIds = {};
       for (const step of custodyStepsForm.steps) {
         console.log('Processing step:', { step_number: step.step_number, isNew: step.isNew, id: step.id, title: step.title });
         
@@ -231,6 +232,7 @@ const CustodyPage = () => {
           }
           const createdStep = await response.json();
           console.log('Successfully created step:', createdStep);
+          createdStepIds[step.step_number] = createdStep.id; // Track the new ID
         } else if (step.id) {
           // Update existing step
           console.log('Updating existing step:', step.id);

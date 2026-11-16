@@ -2,25 +2,44 @@ import React, { useState, useEffect } from 'react';
 import { 
   FaChartLine, FaUsers, FaUserTie, FaBox, FaCoins, FaTruck, FaWarehouse, 
   FaShieldAlt, FaFileAlt, FaHistory, FaPlus, FaArrowRight, FaClock, 
-  FaUser, FaMapMarkerAlt, FaCheck, FaSpinner, FaExclamationTriangle 
+  FaUser, FaMapMarkerAlt, FaCheck, FaSpinner, FaExclamationTriangle,
+  FaEdit, FaSave, FaTimes, FaSearch
 } from 'react-icons/fa';
 import Layout from '../../components/common/Layout';
 import Card from '../../components/common/Card';
 import Modal from '../../components/common/Modal';
-import { API_BASE_URL } from '../../utils/constants';
+import { API_BASE_URL, STATUS_LABELS } from '../../utils/constants';
 import { formatDate } from '../../utils/formatters';
+import { consignmentApi } from '../../services/assetApi';
 
 const CustodyPage = () => {
+  // Custody transfers data
   const [custodyRecords, setCustodyRecords] = useState([]);
+  
+  // Consignments data for custody steps management
+  const [consignments, setConsignments] = useState([]);
+  const [filteredConsignments, setFilteredConsignments] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('steps'); // 'steps' or 'transfers'
+  
+  // Modals
   const [showNewTransferModal, setShowNewTransferModal] = useState(false);
+  const [showCustodyStepsModal, setShowCustodyStepsModal] = useState(false);
   const [selectedConsignment, setSelectedConsignment] = useState(null);
+  
+  // Form data
   const [formData, setFormData] = useState({
     consignment_id: '',
     new_custodian: '',
     new_location: '',
     notes: ''
+  });
+
+  const [custodyStepsForm, setCustodyStepsForm] = useState({
+    steps: []
   });
 
   const menuItems = [
@@ -39,42 +58,115 @@ const CustodyPage = () => {
     { path: '/admin/audit', label: 'Audit Logs', icon: <FaHistory /> },
   ];
 
-  // Fetch custody records
+  // Fetch all consignments and custody records
   useEffect(() => {
-    const fetchCustodyRecords = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const token = sessionStorage.getItem('kestrel_token') || localStorage.getItem('kestrel_token');
+        setError(null);
+
+        // Fetch consignments
+        const consignmentsData = await consignmentApi.getConsignments();
+        const consignmentsList = Array.isArray(consignmentsData) 
+          ? consignmentsData 
+          : (consignmentsData?.results || consignmentsData?.data || []);
         
-        if (!token) {
-          setError('No authentication token found');
-          setLoading(false);
-          return;
-        }
+        setConsignments(consignmentsList);
+        setFilteredConsignments(consignmentsList);
 
-        const response = await fetch(`${API_BASE_URL}/custody/records/`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
+        // Fetch custody records
+        const token = localStorage.getItem('kestrel_token');
+        if (token) {
+          const recordsResponse = await fetch(`${API_BASE_URL}/custody/records/`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
 
-        if (response.ok) {
-          const data = await response.json();
-          setCustodyRecords(Array.isArray(data) ? data : data.results || []);
-        } else {
-          setError('Failed to fetch custody records');
+          if (recordsResponse.ok) {
+            const recordsData = await recordsResponse.json();
+            setCustodyRecords(Array.isArray(recordsData) ? recordsData : recordsData.results || []);
+          }
         }
       } catch (err) {
-        console.error('Error fetching custody records:', err);
-        setError(err.message);
+        console.error('Error fetching data:', err);
+        setError(err.message || 'Failed to load data');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCustodyRecords();
+    fetchData();
   }, []);
+
+  // Filter consignments by search term
+  useEffect(() => {
+    if (!searchTerm) {
+      setFilteredConsignments(consignments);
+    } else {
+      const filtered = consignments.filter(c =>
+        c.consignment_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.item_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.client?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.client_name?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredConsignments(filtered);
+    }
+  }, [searchTerm, consignments]);
+
+  // Open custody steps modal
+  const handleEditCustodySteps = (consignment) => {
+    setSelectedConsignment(consignment);
+    const steps = consignment.custody_steps || [];
+    setCustodyStepsForm({
+      steps: steps.map(s => ({ ...s }))
+    });
+    setShowCustodyStepsModal(true);
+  };
+
+  // Save custody steps
+  const handleSaveCustodySteps = async () => {
+    if (!selectedConsignment) return;
+
+    try {
+      const token = localStorage.getItem('kestrel_token');
+      if (!token) {
+        setError('No authentication token');
+        return;
+      }
+
+      // Update each step
+      for (const step of custodyStepsForm.steps) {
+        await fetch(`${API_BASE_URL}/consignments/${selectedConsignment.id}/custody_steps/${step.id}/`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status: step.status,
+            completion_date: step.completion_date,
+            evidence_description: step.evidence_description,
+          })
+        });
+      }
+
+      alert('Custody steps updated successfully');
+      setShowCustodyStepsModal(false);
+      
+      // Refresh consignments
+      const consignmentsData = await consignmentApi.getConsignments();
+      const consignmentsList = Array.isArray(consignmentsData) 
+        ? consignmentsData 
+        : (consignmentsData?.results || consignmentsData?.data || []);
+      setConsignments(consignmentsList);
+      setFilteredConsignments(consignmentsList);
+    } catch (err) {
+      console.error('Error updating custody steps:', err);
+      setError(err.message);
+    }
+  };
 
   const handleSubmitTransfer = async (e) => {
     e.preventDefault();
@@ -141,47 +233,48 @@ const CustodyPage = () => {
     <Layout menuItems={menuItems}>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-kestrel-gold mb-2">Custody Chain Management</h1>
-            <p className="text-gray-400">Track and manage item custody transfers and handlers</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-kestrel-gold mb-1">Custody Management</h1>
+            <p className="text-gray-400 text-sm sm:text-base">Manage custody steps and track transfers</p>
           </div>
-          <button
-            onClick={() => setShowNewTransferModal(true)}
-            className="btn-primary flex items-center gap-2"
-          >
-            <FaPlus /> Record Transfer
-          </button>
         </div>
 
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Card>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-kestrel-gold mb-2">{custodyRecords.length}</div>
-              <p className="text-gray-400">Total Transfers</p>
-            </div>
-          </Card>
-          <Card>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-emerald-400 mb-2">{Object.keys(custodyChains).length}</div>
-              <p className="text-gray-400">Items Tracked</p>
-            </div>
-          </Card>
-          <Card>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-blue-400 mb-2">{custodyRecords.length > 0 ? (custodyRecords.length / Object.keys(custodyChains).length).toFixed(1) : 0}</div>
-              <p className="text-gray-400">Avg Transfers per Item</p>
-            </div>
-          </Card>
+        {/* Tabs */}
+        <div className="flex gap-2 sm:gap-4 border-b border-gray-700 flex-wrap">
+          <button
+            onClick={() => setActiveTab('steps')}
+            className={`px-3 sm:px-6 py-2 font-semibold text-sm sm:text-base border-b-2 transition-colors ${
+              activeTab === 'steps'
+                ? 'border-kestrel-gold text-kestrel-gold'
+                : 'border-transparent text-gray-400 hover:text-gray-300'
+            }`}
+          >
+            <FaShieldAlt className="inline mr-2" />
+            Custody Steps
+          </button>
+          <button
+            onClick={() => setActiveTab('transfers')}
+            className={`px-3 sm:px-6 py-2 font-semibold text-sm sm:text-base border-b-2 transition-colors ${
+              activeTab === 'transfers'
+                ? 'border-kestrel-gold text-kestrel-gold'
+                : 'border-transparent text-gray-400 hover:text-gray-300'
+            }`}
+          >
+            <FaTruck className="inline mr-2" />
+            Transfers
+          </button>
         </div>
 
         {/* Error State */}
         {error && (
           <Card className="bg-red-900/20 border border-red-700/50">
-            <div className="flex items-center gap-2 text-red-300">
-              <FaExclamationTriangle />
-              <p>{error}</p>
+            <div className="flex items-start gap-3">
+              <FaExclamationTriangle className="text-red-400 flex-shrink-0 mt-1" />
+              <div>
+                <p className="text-red-300 font-semibold">Error</p>
+                <p className="text-red-300 text-sm">{error}</p>
+              </div>
             </div>
           </Card>
         )}
@@ -189,111 +282,291 @@ const CustodyPage = () => {
         {/* Loading State */}
         {loading && (
           <Card>
-            <div className="flex items-center justify-center gap-2 py-12">
-              <FaSpinner className="animate-spin" />
-              <p className="text-gray-400">Loading custody records...</p>
+            <div className="flex items-center justify-center gap-3 py-12">
+              <FaSpinner className="animate-spin text-cyan-400" />
+              <p className="text-gray-400">Loading data...</p>
             </div>
           </Card>
         )}
 
-        {/* Custody Chains View */}
-        {!loading && custodyRecords.length > 0 && (
+        {/* CUSTODY STEPS TAB */}
+        {!loading && activeTab === 'steps' && (
           <div className="space-y-4">
-            {Object.entries(custodyChains).map(([consignmentId, records]) => (
-              <Card key={consignmentId}>
-                <div className="space-y-4">
-                  {/* Chain Header */}
-                  <div className="flex items-center gap-3 pb-4 border-b border-gray-700">
-                    <FaShieldAlt className="text-kestrel-gold text-xl" />
-                    <div>
-                      <h3 className="font-bold text-white">Consignment #{consignmentId}</h3>
-                      <p className="text-xs text-gray-400">{records.length} custody transfer(s)</p>
-                    </div>
-                  </div>
+            {/* Search */}
+            <div className="relative">
+              <FaSearch className="absolute left-3 top-3 text-gray-500" />
+              <input
+                type="text"
+                placeholder="Search by consignment number, item name, or client..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 text-gray-200 placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              />
+            </div>
 
-                  {/* Chain Timeline */}
-                  <div className="space-y-3">
-                    {records.map((record, idx) => (
-                      <div key={idx} className="relative">
-                        {/* Timeline connector */}
-                        {idx < records.length - 1 && (
-                          <div className="absolute left-6 top-12 w-0.5 h-8 bg-gradient-to-b from-kestrel-gold/50 to-transparent" />
-                        )}
-
-                        {/* Timeline item */}
-                        <div className="flex gap-4 items-start">
-                          {/* Timeline dot */}
-                          <div className="relative">
-                            <div className="w-12 h-12 rounded-full bg-kestrel-gold/20 border-2 border-kestrel-gold flex items-center justify-center flex-shrink-0">
-                              {idx === records.length - 1 ? (
-                                <FaCheck className="text-kestrel-gold" />
-                              ) : (
-                                <FaClock className="text-kestrel-gold text-sm" />
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Content */}
-                          <div className="flex-1 bg-gray-800/50 rounded-lg p-3">
-                            {/* Step number */}
-                            <div className="inline-block bg-kestrel-gold/20 text-kestrel-gold text-xs px-2 py-1 rounded mb-2">
-                              Step {idx + 1}
-                            </div>
-
-                            {/* Transfer details */}
-                            <div className="space-y-2">
-                              <div className="flex items-center gap-2 text-sm">
-                                <FaUser className="text-blue-400" />
-                                <span className="text-gray-300">
-                                  {record.previous_custodian_name ? `${record.previous_custodian_name} → ${record.new_custodian_name}` : 'Custody Transfer'}
-                                </span>
-                              </div>
-
-                              <div className="flex items-center gap-2 text-sm">
-                                <FaMapMarkerAlt className="text-emerald-400" />
-                                <span className="text-gray-300">
-                                  {record.previous_location} <FaArrowRight className="inline mx-1 text-gray-500" /> {record.new_location}
-                                </span>
-                              </div>
-
-                              <div className="flex items-center gap-2 text-xs text-gray-400">
-                                <FaClock />
-                                {formatDate(record.transfer_date, 'PPp')}
-                              </div>
-
-                              {record.notes && (
-                                <div className="bg-gray-900/50 rounded p-2 text-xs text-gray-400 italic">
-                                  "{record.notes}"
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Chain Summary */}
-                  <div className="bg-gradient-to-r from-kestrel-gold/10 to-transparent rounded-lg p-3 text-xs text-gray-300">
-                    <span className="font-semibold">Chain complete:</span> Item transferred through {records.length} handler(s) from start to current location
-                  </div>
+            {/* Consignments Grid */}
+            {filteredConsignments.length === 0 ? (
+              <Card>
+                <div className="text-center py-8">
+                  <FaBox className="text-4xl text-gray-600 mx-auto mb-3" />
+                  <p className="text-gray-400">No consignments found</p>
                 </div>
               </Card>
-            ))}
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                {filteredConsignments.map((consignment) => (
+                  <Card key={consignment.id} className="hover:border-cyan-500/50 transition-colors">
+                    <div className="space-y-4">
+                      {/* Consignment Header */}
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 pb-4 border-b border-gray-700">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-white text-sm sm:text-base break-words">
+                            #{consignment.consignment_number}
+                          </h3>
+                          <p className="text-cyan-400 text-xs sm:text-sm font-semibold truncate">
+                            {consignment.item_name}
+                          </p>
+                          <p className="text-gray-400 text-xs sm:text-sm">
+                            Owner: {consignment.client_name || consignment.client?.full_name || 'N/A'}
+                          </p>
+                        </div>
+                        <span className="bg-cyan-900/30 text-cyan-400 px-2 sm:px-3 py-1 rounded text-xs font-semibold whitespace-nowrap">
+                          {STATUS_LABELS[consignment.status] || consignment.status}
+                        </span>
+                      </div>
+
+                      {/* Custody Steps Summary */}
+                      <div className="space-y-2">
+                        {consignment.custody_steps && consignment.custody_steps.length > 0 ? (
+                          <>
+                            <div className="text-xs text-gray-500">
+                              {consignment.custody_steps.filter(s => s.status === 'completed').length} of {consignment.custody_steps.length} steps completed
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {consignment.custody_steps.map((step) => (
+                                <div
+                                  key={step.id}
+                                  className={`px-2 py-1 rounded text-xs font-semibold whitespace-nowrap ${
+                                    step.status === 'completed'
+                                      ? 'bg-green-900/30 text-green-400'
+                                      : step.status === 'pending'
+                                      ? 'bg-blue-900/30 text-blue-400'
+                                      : step.status === 'evidence_required'
+                                      ? 'bg-orange-900/30 text-orange-400'
+                                      : 'bg-gray-700/30 text-gray-400'
+                                  }`}
+                                >
+                                  {step.step_number}. {step.title}
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        ) : (
+                          <p className="text-gray-500 text-xs">No custody steps defined</p>
+                        )}
+                      </div>
+
+                      {/* Action Button */}
+                      <button
+                        onClick={() => handleEditCustodySteps(consignment)}
+                        className="w-full sm:w-auto btn-primary flex items-center justify-center gap-2 text-sm"
+                      >
+                        <FaEdit /> Manage Custody Steps
+                      </button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
-        {/* Empty State */}
-        {!loading && custodyRecords.length === 0 && (
-          <Card>
-            <div className="text-center py-12">
-              <FaShieldAlt className="text-4xl text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-400 mb-2">No custody transfers recorded yet</p>
-              <p className="text-sm text-gray-500">Record the first custody transfer to begin tracking the chain of custody</p>
+        {/* TRANSFERS TAB */}
+        {!loading && activeTab === 'transfers' && (
+          <div className="space-y-4">
+            {/* Header with button */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div>
+                <p className="text-gray-400 text-sm">Total transfers: {custodyRecords.length}</p>
+              </div>
+              <button
+                onClick={() => setShowNewTransferModal(true)}
+                className="w-full sm:w-auto btn-primary flex items-center justify-center gap-2 text-sm"
+              >
+                <FaPlus /> Record Transfer
+              </button>
             </div>
-          </Card>
+
+            {/* Transfers List */}
+            {custodyRecords.length === 0 ? (
+              <Card>
+                <div className="text-center py-8">
+                  <FaTruck className="text-4xl text-gray-600 mx-auto mb-3" />
+                  <p className="text-gray-400 text-sm">No custody transfers recorded yet</p>
+                </div>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {custodyRecords.map((record, idx) => (
+                  <Card key={idx} className="overflow-hidden">
+                    <div className="space-y-3">
+                      {/* Transfer Info */}
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-xs sm:text-sm">
+                        <span className="font-semibold text-white">Consignment #{record.consignment_id}</span>
+                        <span className="text-gray-500 hidden sm:inline">•</span>
+                        <span className="text-gray-400">{formatDate(record.transfer_date, 'PPp')}</span>
+                      </div>
+
+                      {/* Custodian Transfer */}
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-xs sm:text-sm text-gray-300">
+                        <span className="flex items-center gap-1">
+                          <FaUser className="text-blue-400" />
+                          {record.previous_custodian_name || 'Origin'}
+                        </span>
+                        <FaArrowRight className="hidden sm:inline text-gray-500" />
+                        <span className="text-gray-400 sm:hidden">→</span>
+                        <span className="flex items-center gap-1">
+                          <FaUser className="text-cyan-400" />
+                          {record.new_custodian_name || 'Unknown'}
+                        </span>
+                      </div>
+
+                      {/* Location Transfer */}
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-xs sm:text-sm text-gray-300">
+                        <span className="flex items-center gap-1">
+                          <FaMapMarkerAlt className="text-emerald-400" />
+                          {record.previous_location || 'Unknown'}
+                        </span>
+                        <FaArrowRight className="hidden sm:inline text-gray-500" />
+                        <span className="text-gray-400 sm:hidden">→</span>
+                        <span className="flex items-center gap-1">
+                          <FaMapMarkerAlt className="text-emerald-400" />
+                          {record.new_location}
+                        </span>
+                      </div>
+
+                      {/* Notes */}
+                      {record.notes && (
+                        <div className="bg-gray-800/50 rounded p-2 text-xs italic text-gray-400 break-words">
+                          "{record.notes}"
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </div>
+
+      {/* Custody Steps Modal */}
+      {showCustodyStepsModal && selectedConsignment && (
+        <Modal
+          isOpen={showCustodyStepsModal}
+          onClose={() => setShowCustodyStepsModal(false)}
+          title={`Custody Steps - ${selectedConsignment.consignment_number}`}
+          size="large"
+        >
+          <div className="space-y-4 max-h-[70vh] overflow-y-auto">
+            {/* Client Info */}
+            <div className="bg-gray-800/50 rounded p-3 mb-4">
+              <p className="text-xs text-gray-500">Item Owner</p>
+              <p className="text-white font-semibold text-sm">
+                {selectedConsignment.client_name || selectedConsignment.client?.full_name}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                {selectedConsignment.item_name}
+              </p>
+            </div>
+
+            {/* Custody Steps */}
+            <div className="space-y-3">
+              {custodyStepsForm.steps.map((step, idx) => (
+                <div key={step.id || idx} className="border border-gray-700 rounded-lg p-4 space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-gray-700">
+                    <h4 className="font-semibold text-white text-sm">Step {step.step_number}: {step.title}</h4>
+                    <span className="text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded">ID: {step.id}</span>
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Description</p>
+                    <p className="text-sm text-gray-300">{step.description}</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Status */}
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Status</label>
+                      <select
+                        value={step.status}
+                        onChange={(e) => {
+                          const updated = [...custodyStepsForm.steps];
+                          updated[idx].status = e.target.value;
+                          setCustodyStepsForm({ steps: updated });
+                        }}
+                        className="w-full px-2 py-1 bg-gray-700 border border-gray-600 text-gray-200 rounded text-xs focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                      >
+                        <option value="not_established">Not Established</option>
+                        <option value="pending">Pending</option>
+                        <option value="evidence_required">Evidence Required</option>
+                        <option value="completed">Completed</option>
+                      </select>
+                    </div>
+
+                    {/* Completion Date */}
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Completion Date</label>
+                      <input
+                        type="date"
+                        value={step.completion_date?.split('T')[0] || ''}
+                        onChange={(e) => {
+                          const updated = [...custodyStepsForm.steps];
+                          updated[idx].completion_date = e.target.value ? `${e.target.value}T00:00:00Z` : null;
+                          setCustodyStepsForm({ steps: updated });
+                        }}
+                        className="w-full px-2 py-1 bg-gray-700 border border-gray-600 text-gray-200 rounded text-xs focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Evidence Description */}
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Evidence Description</label>
+                    <textarea
+                      value={step.evidence_description || ''}
+                      onChange={(e) => {
+                        const updated = [...custodyStepsForm.steps];
+                        updated[idx].evidence_description = e.target.value;
+                        setCustodyStepsForm({ steps: updated });
+                      }}
+                      placeholder="Describe the evidence for this step..."
+                      className="w-full px-2 py-1 bg-gray-700 border border-gray-600 text-gray-200 rounded text-xs focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                      rows="2"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row gap-2 pt-4">
+              <button
+                onClick={handleSaveCustodySteps}
+                className="flex-1 btn-primary flex items-center justify-center gap-2 text-sm"
+              >
+                <FaSave /> Save Changes
+              </button>
+              <button
+                onClick={() => setShowCustodyStepsModal(false)}
+                className="flex-1 btn-secondary flex items-center justify-center gap-2 text-sm"
+              >
+                <FaTimes /> Close
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* New Transfer Modal */}
       {showNewTransferModal && (
@@ -311,11 +584,15 @@ const CustodyPage = () => {
               <select
                 value={formData.consignment_id}
                 onChange={(e) => setFormData({ ...formData, consignment_id: e.target.value })}
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-kestrel-gold"
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-kestrel-gold text-sm"
                 required
               >
                 <option value="">Select a consignment...</option>
-                {/* Options would be populated from API */}
+                {consignments.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.consignment_number} - {c.item_name} ({c.client_name || c.client?.full_name})
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -328,7 +605,7 @@ const CustodyPage = () => {
                 value={formData.new_custodian}
                 onChange={(e) => setFormData({ ...formData, new_custodian: e.target.value })}
                 placeholder="Enter staff member name"
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-600 text-gray-200 placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-kestrel-gold"
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 text-gray-200 placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-kestrel-gold text-sm"
                 required
               />
             </div>
@@ -341,8 +618,8 @@ const CustodyPage = () => {
                 type="text"
                 value={formData.new_location}
                 onChange={(e) => setFormData({ ...formData, new_location: e.target.value })}
-                placeholder="Enter new location (e.g., Vault A, Transit Center)"
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-600 text-gray-200 placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-kestrel-gold"
+                placeholder="Enter new location"
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 text-gray-200 placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-kestrel-gold text-sm"
                 required
               />
             </div>
@@ -354,23 +631,20 @@ const CustodyPage = () => {
               <textarea
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                placeholder="Add any relevant notes about this transfer..."
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-600 text-gray-200 placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-kestrel-gold"
+                placeholder="Add any relevant notes..."
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 text-gray-200 placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-kestrel-gold text-sm"
                 rows="3"
               />
             </div>
 
-            <div className="flex gap-3 pt-4">
-              <button
-                type="submit"
-                className="flex-1 btn-primary"
-              >
+            <div className="flex flex-col sm:flex-row gap-2 pt-4">
+              <button type="submit" className="flex-1 btn-primary text-sm">
                 Record Transfer
               </button>
               <button
                 type="button"
                 onClick={() => setShowNewTransferModal(false)}
-                className="flex-1 btn-secondary"
+                className="flex-1 btn-secondary text-sm"
               >
                 Cancel
               </button>

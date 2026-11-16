@@ -363,7 +363,7 @@ class ConsignmentViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def custody_steps(self, request, pk=None):
-        """Create a new custody step for a consignment (Admin and Staff only)."""
+        """Create or update a custody step for a consignment (Admin and Staff only)."""
         if request.user.role not in ['admin', 'staff']:
             return Response(
                 {'detail': 'Only admin and staff can create custody steps.'},
@@ -388,18 +388,36 @@ class ConsignmentViewSet(viewsets.ModelViewSet):
             )
         
         try:
-            custody_step = CustodyStep.objects.create(
-                consignment=consignment,
-                step_number=step_number,
-                title=title,
-                description=description,
-                evidence_description=evidence_description,
-                status=step_status,
-                completion_date=completion_date
-            )
-            
-            serializer = CustodyStepSerializer(custody_step)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            # Try to get existing step with this step_number
+            try:
+                custody_step = CustodyStep.objects.get(
+                    consignment=consignment,
+                    step_number=step_number
+                )
+                # Update existing step
+                custody_step.title = title
+                custody_step.description = description
+                custody_step.evidence_description = evidence_description
+                custody_step.status = step_status
+                custody_step.completion_date = completion_date
+                custody_step.save()
+                
+                serializer = CustodyStepSerializer(custody_step)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            except CustodyStep.DoesNotExist:
+                # Create new step
+                custody_step = CustodyStep.objects.create(
+                    consignment=consignment,
+                    step_number=step_number,
+                    title=title,
+                    description=description,
+                    evidence_description=evidence_description,
+                    status=step_status,
+                    completion_date=completion_date
+                )
+                
+                serializer = CustodyStepSerializer(custody_step)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response(
                 {'error': str(e)},

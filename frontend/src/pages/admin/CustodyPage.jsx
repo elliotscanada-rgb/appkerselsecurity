@@ -201,8 +201,11 @@ const CustodyPage = () => {
 
       // Process each step
       for (const step of custodyStepsForm.steps) {
+        console.log('Processing step:', { step_number: step.step_number, isNew: step.isNew, id: step.id, title: step.title });
+        
         if (step.isNew) {
           // Create new step
+          console.log('Creating new step:', step.step_number);
           const response = await fetch(`${API_BASE_URL}/consignments/${selectedConsignment.id}/custody_steps/`, {
             method: 'POST',
             headers: {
@@ -221,10 +224,14 @@ const CustodyPage = () => {
           
           if (!response.ok) {
             const errData = await response.json();
-            throw new Error(errData.detail || 'Failed to create custody step');
+            console.error('Error response:', errData);
+            throw new Error(errData.detail || errData.error || 'Failed to create custody step');
           }
+          const createdStep = await response.json();
+          console.log('Successfully created step:', createdStep);
         } else if (step.id) {
           // Update existing step
+          console.log('Updating existing step:', step.id);
           const response = await fetch(`${API_BASE_URL}/consignments/${selectedConsignment.id}/custody_steps/${step.id}/`, {
             method: 'PATCH',
             headers: {
@@ -242,8 +249,11 @@ const CustodyPage = () => {
 
           if (!response.ok) {
             const errData = await response.json();
-            throw new Error(errData.detail || 'Failed to update custody step');
+            console.error('Error response:', errData);
+            throw new Error(errData.detail || errData.error || 'Failed to update custody step');
           }
+          const updatedStep = await response.json();
+          console.log('Successfully updated step:', updatedStep);
         }
       }
 
@@ -260,6 +270,7 @@ const CustodyPage = () => {
     } catch (err) {
       console.error('Error saving custody steps:', err);
       alert(`Error: ${err.message}`);
+      setError(err.message);
     }
   };
 

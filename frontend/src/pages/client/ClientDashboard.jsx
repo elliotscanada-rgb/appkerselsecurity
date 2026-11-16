@@ -389,19 +389,19 @@ const ClientDashboard = () => {
                         </div>
                       </div>
 
-                      {/* Asset Details Grid - GOLD WEIGHT ONLY */}
+                      {/* Asset Details Grid - GOLD QUANTITY ONLY */}
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 mb-4">
                         <div className="min-w-0 overflow-hidden">
-                          <p className="text-xs text-gray-500 truncate">Quantity</p>
-                          <p className="font-semibold text-xs sm:text-sm text-gray-200 break-words">{asset.quantity}</p>
+                          <p className="text-xs text-gray-500 truncate">Gold Quantity</p>
+                          <p className="font-semibold text-xs sm:text-sm text-gray-200 break-words">{asset.weight}{asset.weightUnit}</p>
                         </div>
                         <div className="min-w-0 overflow-hidden">
                           <p className="text-xs text-gray-500 truncate">Purity</p>
                           <p className="font-semibold text-xs sm:text-sm text-gray-200 break-words">{asset.purity}‰</p>
                         </div>
                         <div className="min-w-0 overflow-hidden">
-                          <p className="text-xs text-gray-500 truncate">Weight</p>
-                          <p className="font-semibold text-xs sm:text-sm text-gray-200 break-words">{formatWeight(asset.weight, asset.weightUnit)}</p>
+                          <p className="text-xs text-gray-500 truncate">Items</p>
+                          <p className="font-semibold text-xs sm:text-sm text-gray-200 break-words">{asset.quantity}</p>
                         </div>
                       </div>
 

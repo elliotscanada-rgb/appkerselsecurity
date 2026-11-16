@@ -653,25 +653,79 @@ const AdminEditAssetsPage = () => {
                   )}
                 </div>
 
-                {/* Weight */}
-                <div className="grid grid-cols-3 gap-2">
+                {/* Gold Quantity and Purity */}
+                <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="text-xs font-semibold text-gray-400 block mb-1">Weight</label>
-                    <p className="p-2 bg-gray-800 border border-gray-700 rounded text-sm text-gray-300">
-                      {selectedConsignment.weight || 'N/A'} {selectedConsignment.weight_unit}
-                    </p>
+                    <label className="text-xs font-semibold text-gray-400 block mb-1">Gold Quantity ({selectedConsignment.weight_unit})</label>
+                    {editingField === 'weight' ? (
+                      <div className="flex gap-2">
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={editFormData.weight}
+                          onChange={(e) => setEditFormData({ ...editFormData, weight: e.target.value })}
+                          className="flex-1 px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm text-white"
+                        />
+                        <button
+                          onClick={() => handleFieldUpdate('weight', editFormData.weight)}
+                          className="px-2 py-1 bg-green-600 hover:bg-green-700 rounded text-xs font-semibold"
+                          disabled={loading}
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => setEditingField(null)}
+                          className="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setEditingField('weight')}
+                        className="w-full text-left p-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded text-sm text-gray-300 flex items-center justify-between"
+                      >
+                        <span>{selectedConsignment.weight || 'N/A'} {selectedConsignment.weight_unit}</span>
+                        <FaEdit className="text-xs text-gray-500" />
+                      </button>
+                    )}
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-400 block mb-1">Purity</label>
-                    <p className="p-2 bg-gray-800 border border-gray-700 rounded text-sm text-gray-300">
-                      {selectedConsignment.purity || 'N/A'}%
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-400 block mb-1">Quantity</label>
-                    <p className="p-2 bg-gray-800 border border-gray-700 rounded text-sm text-gray-300">
-                      {selectedConsignment.quantity || 1}
-                    </p>
+                    <label className="text-xs font-semibold text-gray-400 block mb-1">Purity (0-1000‰)</label>
+                    {editingField === 'purity' ? (
+                      <div className="flex gap-2">
+                        <input
+                          type="number"
+                          min="0"
+                          max="1000"
+                          step="1"
+                          value={editFormData.purity}
+                          onChange={(e) => setEditFormData({ ...editFormData, purity: e.target.value })}
+                          className="flex-1 px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm text-white"
+                        />
+                        <button
+                          onClick={() => handleFieldUpdate('purity', editFormData.purity)}
+                          className="px-2 py-1 bg-green-600 hover:bg-green-700 rounded text-xs font-semibold"
+                          disabled={loading}
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => setEditingField(null)}
+                          className="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setEditingField('purity')}
+                        className="w-full text-left p-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded text-sm text-gray-300 flex items-center justify-between"
+                      >
+                        <span>{selectedConsignment.purity || 'N/A'}‰</span>
+                        <FaEdit className="text-xs text-gray-500" />
+                      </button>
+                    )}
                   </div>
                 </div>
 

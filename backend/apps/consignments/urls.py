@@ -6,6 +6,7 @@ app_name = 'consignments'
 
 router = DefaultRouter()
 router.register(r'', views.ConsignmentViewSet, basename='consignment')
+router.register(r'settings', views.GoldSettingsViewSet, basename='gold-settings')
 
 # Nested router for custody steps
 # This allows URLs like:

@@ -263,3 +263,20 @@ class ClientConsignmentListSerializer(serializers.ModelSerializer):
         except:
             return []
             return 0
+
+
+class GoldSettingsSerializer(serializers.ModelSerializer):
+    """Serializer for gold purity range settings."""
+
+    class Meta:
+        from .models import GoldSettings
+        model = GoldSettings
+        fields = ['purity_min', 'purity_max', 'updated_at']
+        read_only_fields = ['updated_at']
+
+    def validate(self, data):
+        purity_min = data.get('purity_min', 0)
+        purity_max = data.get('purity_max', 1000)
+        if purity_min > purity_max:
+            raise serializers.ValidationError('Minimum purity cannot exceed maximum purity.')
+        return data

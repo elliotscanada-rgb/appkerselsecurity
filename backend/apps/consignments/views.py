@@ -1,4 +1,5 @@
 from rest_framework import viewsets, status
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -6,7 +7,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from django.db.models import Q
 
-from .models import Consignment, ConsignmentHistory, CustodyStep
+from .models import Consignment, ConsignmentHistory, CustodyStep, GoldSettings
 from .serializers import (
     ConsignmentSerializer,
     ConsignmentDetailSerializer,
@@ -15,7 +16,8 @@ from .serializers import (
     ConsignmentListSerializer,
     ClientConsignmentListSerializer,
     ConsignmentHistorySerializer,
-    CustodyStepSerializer
+    CustodyStepSerializer,
+    GoldSettingsSerializer
 )
 from apps.accounts.permissions import IsAdmin, IsStaff, IsClient
 
@@ -459,3 +461,35 @@ class CustodyStepViewSet(viewsets.ModelViewSet):
             )
         return super().destroy(request, *args, **kwargs)
 
+
+
+
+class GoldSettingsViewSet(viewsets.ViewSet):
+    """API endpoint for gold purity range settings (Admin only)."""
+    
+    permission_classes = [IsAuthenticated, IsAdmin]
+    
+    @action(detail=False, methods=['get'])
+    def get_settings(self, request):
+        """Get current gold purity range settings."""
+        settings = GoldSettings.get_settings()
+        serializer = GoldSettingsSerializer(settings)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['put'])
+    def update_settings(self, request):
+        """Update gold purity range settings (Admin only)."""
+        if request.user.role != 'admin':
+            return Response(
+                {'detail': 'Only administrators can update gold settings.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        settings = GoldSettings.get_settings()
+        serializer = GoldSettingsSerializer(settings, data=request.data, partial=True)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

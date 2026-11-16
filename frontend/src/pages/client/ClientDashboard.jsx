@@ -345,16 +345,22 @@ const ClientDashboard = () => {
                     {/* Image Section - Photo Design */}
                     <div className="relative w-full md:w-80 bg-gray-800 flex items-center justify-center overflow-hidden" style={{ minHeight: '280px' }}>
                       <div className="relative w-full sm:w-64 md:w-72 h-64 sm:h-72 overflow-hidden shadow-lg border-2 border-cyan-500/30 flex items-center justify-center bg-gray-800 flex-shrink-0">
-                        <img 
-                          src={asset.imageUrl} 
-                          alt={asset.name}
-                          className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
-                          loading="lazy"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.parentElement.style.background = 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)';
-                          }}
-                        />
+                        {asset.image_url ? (
+                          <img 
+                            src={asset.image_url} 
+                            alt={asset.name}
+                            className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
+                            loading="lazy"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.parentElement.style.background = 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)';
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-yellow-100 to-yellow-200 flex items-center justify-center">
+                            <FaBox className="text-yellow-700 text-6xl opacity-30" />
+                          </div>
+                        )}
                       </div>
                       <div className="absolute top-3 right-3 bg-gray-900 border border-cyan-500/50 px-3 py-1 rounded-full shadow-md">
                         <span className="text-xs font-bold text-cyan-400">Qty {asset.quantity}</span>
@@ -392,16 +398,16 @@ const ClientDashboard = () => {
                       {/* Asset Details Grid - GOLD QUANTITY ONLY */}
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 mb-4">
                         <div className="min-w-0 overflow-hidden">
-                          <p className="text-xs text-gray-500 truncate">Gold Quantity</p>
+                          <p className="text-xs text-gray-500 truncate">Quantity</p>
+                          <p className="font-semibold text-xs sm:text-sm text-gray-200 break-words">{asset.quantity} items</p>
+                        </div>
+                        <div className="min-w-0 overflow-hidden">
+                          <p className="text-xs text-gray-500 truncate">Weight</p>
                           <p className="font-semibold text-xs sm:text-sm text-gray-200 break-words">{asset.weight}{asset.weightUnit}</p>
                         </div>
                         <div className="min-w-0 overflow-hidden">
                           <p className="text-xs text-gray-500 truncate">Purity</p>
                           <p className="font-semibold text-xs sm:text-sm text-gray-200 break-words">{asset.purity}‰</p>
-                        </div>
-                        <div className="min-w-0 overflow-hidden">
-                          <p className="text-xs text-gray-500 truncate">Items</p>
-                          <p className="font-semibold text-xs sm:text-sm text-gray-200 break-words">{asset.quantity}</p>
                         </div>
                       </div>
 

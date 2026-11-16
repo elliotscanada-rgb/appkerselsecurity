@@ -770,9 +770,6 @@ export const custodyApi = {
   },
 };
 
-// Note: consignmentApi is defined earlier in the file (line 52)
-// It includes all necessary methods for consignment management
-
 // =====================================================
 // SEARCH & FILTER ENDPOINTS
 // =====================================================
@@ -1285,17 +1282,30 @@ export const auditApi = {
   },
 };
 
-export default {
-  assetApi,
-  shipmentApi,
-  locationApi,
-  custodyApi,
-  consignmentApi,
-  documentApi,
-  searchApi,
-  reportingApi,
-  notificationApi,
-  userApi,
-  clientApi,
-  auditApi,
+// =====================================================
+// GOLD SETTINGS ENDPOINTS (Admin only)
+// =====================================================
+
+export const goldSettingsApi = {
+  /**
+   * Get gold purity range settings
+   */
+  getSettings: async () => {
+    return apiRequest('/consignments/settings/get_settings/');
+  },
+
+  /**
+   * Update gold purity range settings (Admin only)
+   * @param {Object} settings - {purity_min, purity_max}
+   */
+  updateSettings: async (settings) => {
+    return apiRequest('/consignments/settings/update_settings/', {
+      method: 'PUT',
+      body: JSON.stringify(settings),
+    });
+  },
 };
+
+// =====================================================
+// GOLD SETTINGS ENDPOINTS (Admin only)
+// =====================================================

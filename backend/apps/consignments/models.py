@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.core.validators import MinValueValidator, MaxValueValidator
 import random
 import string
 
@@ -208,3 +209,33 @@ class Consignment(models.Model):
                 previous_status=old_status,
                 new_status=self.status
             )
+
+
+class GoldSettings(models.Model):
+    """Singleton model for global gold purity range configuration."""
+
+    purity_min = models.DecimalField(
+        max_digits=6, decimal_places=2, default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(1000)],
+        help_text='Minimum acceptable purity (0-1000‰)'
+    )
+    purity_max = models.DecimalField(
+        max_digits=6, decimal_places=2, default=1000,
+        validators=[MinValueValidator(0), MaxValueValidator(1000)],
+        help_text='Maximum acceptable purity (0-1000‰)'
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'gold_settings'
+        verbose_name = 'Gold Settings'
+        verbose_name_plural = 'Gold Settings'
+
+    def __str__(self):
+        return f'Gold Settings: {self.purity_min}‰ – {self.purity_max}‰'
+
+    @classmethod
+    def get_settings(cls):
+        """Return the single settings row, creating it if it doesn't exist."""
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj

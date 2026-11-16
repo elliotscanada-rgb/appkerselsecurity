@@ -264,30 +264,24 @@ const MyConsignments = () => {
                       {/* Middle: Physical Specs (Weight only - no money values) */}
                       <div className="flex-1 bg-gray-800 p-4 rounded-lg border border-gray-700/50">
                         <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <p className="text-xs text-gray-500 uppercase">Quantity</p>
-                            <p className="text-lg font-bold text-white">
-                              {consignment.quantity || 'N/A'}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-gray-500 uppercase">Purity</p>
-                            <p className="text-lg font-bold text-kestrel-gold">
-                              {consignment.purity || 'N/A'}‰
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-gray-500 uppercase">Weight</p>
-                            <p className="text-sm font-semibold text-gray-300">
-                              {consignment.weight || 'N/A'} {consignment.weight_unit || 'kg'}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-gray-500 uppercase">Storage</p>
-                            <p className="text-sm font-semibold text-gray-300">
-                              {consignment.storageLocation || 'Secure Storage'}
-                            </p>
-                          </div>
+                        <div>
+                          <p className="text-xs text-gray-500 uppercase">Quantity</p>
+                          <p className="text-lg font-bold text-white">
+                            {consignment.quantity || 'N/A'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 uppercase">Purity</p>
+                          <p className="text-lg font-bold text-kestrel-gold">
+                            {consignment.purity || 'N/A'}‰
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 uppercase">Weight</p>
+                          <p className="text-sm font-semibold text-gray-300">
+                            {consignment.weight || 'N/A'} {consignment.weight_unit || 'kg'}
+                          </p>
+                        </div>
                         </div>
                       </div>
 

@@ -90,12 +90,32 @@ const ClientDashboard = () => {
     fetchPortfolio();
     setLoading(false);
     
+    // Only poll if tab is visible (tab-aware polling)
     const pollInterval = setInterval(() => {
-      fetchConsignments();
-      fetchPortfolio();
+      if (!document.hidden) {
+        console.log('Tab visible - polling for updates');
+        fetchConsignments();
+        fetchPortfolio();
+      } else {
+        console.log('Tab hidden - skipping poll');
+      }
     }, 10000);
     
-    return () => clearInterval(pollInterval);
+    // Listen for visibility changes
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('Tab became visible - fetching fresh data');
+        fetchConsignments();
+        fetchPortfolio();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      clearInterval(pollInterval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   const normalizeAssets = (rawAssets) => {

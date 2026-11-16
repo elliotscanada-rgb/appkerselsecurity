@@ -138,13 +138,6 @@ const CustodyChainTimeline = ({ consignment }) => {
           );
         })}
       </div>
-
-      {/* Footer Note */}
-      <div className="mt-8 pt-6 border-t border-gray-700">
-        <p className="text-gray-500 text-xs leading-relaxed">
-          Gold cannot be tracked like a package in transit. What customers can realistically track is its verified chain of custody, inventory identification, inspections, and assay documentation.
-        </p>
-      </div>
     </div>
   );
 };

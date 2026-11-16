@@ -2,8 +2,23 @@ from rest_framework import serializers
 from rest_framework import serializers
 from django.utils import timezone
 from django.db import models
-from .models import Consignment, ConsignmentHistory
+from .models import Consignment, ConsignmentHistory, CustodyStep
 from apps.clients.serializers import ClientSerializer
+
+
+class CustodyStepSerializer(serializers.ModelSerializer):
+    """Serializer for CustodyStep model."""
+    
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    
+    class Meta:
+        model = CustodyStep
+        fields = [
+            'id', 'step_number', 'title', 'description', 
+            'evidence_description', 'status', 'status_display', 
+            'completion_date', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
 
 
 class ConsignmentHistorySerializer(serializers.ModelSerializer):
@@ -44,6 +59,7 @@ class ConsignmentDetailSerializer(serializers.ModelSerializer):
     history = ConsignmentHistorySerializer(many=True, read_only=True)
     shipments = serializers.SerializerMethodField()
     service_charges = serializers.SerializerMethodField()
+    custody_steps = CustodyStepSerializer(many=True, read_only=True)
     
     class Meta:
         model = Consignment
@@ -56,7 +72,7 @@ class ConsignmentDetailSerializer(serializers.ModelSerializer):
             'received_by', 'received_by_name', 'received_date',
             'image', 'image_url',
             'created_at', 'updated_at', 'history',
-            'shipments', 'service_charges'
+            'shipments', 'service_charges', 'custody_steps'
         ]
         read_only_fields = ['id', 'consignment_number', 'created_at', 'updated_at', 'image_url']
     
@@ -195,6 +211,7 @@ class ClientConsignmentListSerializer(serializers.ModelSerializer):
     image_url = serializers.SerializerMethodField()
     total_charges = serializers.SerializerMethodField()
     service_charges = serializers.SerializerMethodField()
+    custody_steps = CustodyStepSerializer(many=True, read_only=True)
     
     class Meta:
         model = Consignment
@@ -204,7 +221,7 @@ class ClientConsignmentListSerializer(serializers.ModelSerializer):
             'declared_value', 'declared_value_currency', 'total_value', 
             'status', 'status_display', 'received_date', 'current_location', 
             'shipment_count', 'image', 'image_url',
-            'total_charges', 'service_charges'
+            'total_charges', 'service_charges', 'custody_steps'
         ]
     
     def get_shipment_count(self, obj):

@@ -170,6 +170,7 @@ const LocationMap = ({ shipment, consignment }) => {
         isPulsing: config.isPulsing,
         consignment_number: consignment.consignment_number,
         item_name: consignment.item_name,
+        client_name: consignment.client_name, // Add account owner name
       });
       
       setMarkers(newMarkers);
@@ -177,7 +178,7 @@ const LocationMap = ({ shipment, consignment }) => {
       setMapCenter([storageFacility.lat, storageFacility.lng]);
       setZoomLevel(12);
       setHasLocations(true);
-      setLocationStatus(`Your ${consignment.item_name} is currently ${config.label.toLowerCase()} at ${storageFacility.name}`);
+      setLocationStatus(`${consignment.client_name}'s ${consignment.item_name} is ${config.label.toLowerCase()} at ${storageFacility.name}`);
       return;
     }
 
@@ -312,6 +313,11 @@ const LocationMap = ({ shipment, consignment }) => {
             <Popup>
               <div style={{ minWidth: '200px' }}>
                 <p style={{ fontWeight: 'bold', marginBottom: '4px', fontSize: '14px' }}>{m.label}</p>
+                {m.client_name && (
+                  <p style={{ fontSize: '12px', color: '#374151', marginBottom: '2px' }}>
+                    <strong>Account Owner:</strong> {m.client_name}
+                  </p>
+                )}
                 {m.consignment_number && (
                   <p style={{ fontSize: '12px', color: '#374151', marginBottom: '2px' }}>
                     <strong>Consignment:</strong> {m.consignment_number}

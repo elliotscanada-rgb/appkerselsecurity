@@ -12,6 +12,37 @@ def generate_consignment_number():
     return f"{prefix}-{year}-{random_digits}"
 
 
+class CustodyStep(models.Model):
+    """Custody chain steps for a consignment - defined by admin."""
+    
+    STATUS_CHOICES = [
+        ('completed', 'Recorded'),
+        ('evidence_required', 'Evidence required'),
+        ('not_established', 'Not established'),
+        ('pending', 'Pending'),
+    ]
+    
+    consignment = models.ForeignKey('Consignment', on_delete=models.CASCADE, related_name='custody_steps')
+    step_number = models.IntegerField()  # 1, 2, 3, 4, 5, etc.
+    title = models.CharField(max_length=200)  # e.g., "Deposit registered"
+    description = models.TextField()  # e.g., "Deposit record created"
+    evidence_description = models.TextField()  # e.g., "Deposit receipt and documentation"
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='not_established')
+    completion_date = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'custody_steps'
+        ordering = ['step_number']
+        verbose_name = 'Custody Step'
+        verbose_name_plural = 'Custody Steps'
+        unique_together = ('consignment', 'step_number')
+    
+    def __str__(self):
+        return f"{self.consignment.consignment_number} - Step {self.step_number}: {self.title}"
+
+
 class ConsignmentHistory(models.Model):
     """Track all status changes and events for a consignment."""
     

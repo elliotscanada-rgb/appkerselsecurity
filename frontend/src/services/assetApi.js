@@ -52,21 +52,21 @@ const apiRequest = async (endpoint, options = {}) => {
     let response = await fetch(url, config);
 
     // If 401 Unauthorized and we have a refresh token, try to refresh
-    if (response.status === 401 && sessionStorage.getItem('refreshToken')) {
+    if (response.status === 401 && localStorage.getItem('refreshToken')) {
       console.log('Token expired, attempting refresh...');
       try {
         const refreshResponse = await fetch(`${API_BASE_URL}/auth/token/refresh/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refresh: sessionStorage.getItem('refreshToken') })
+          body: JSON.stringify({ refresh: localStorage.getItem('refreshToken') })
         });
         
         if (refreshResponse.ok) {
           const refreshData = await refreshResponse.json();
           // Update stored tokens (refresh token may be rotated)
-          sessionStorage.setItem('kestrel_token', refreshData.access);
+          localStorage.setItem('kestrel_token', refreshData.access);
           if (refreshData.refresh) {
-            sessionStorage.setItem('refreshToken', refreshData.refresh);
+            localStorage.setItem('refreshToken', refreshData.refresh);
           }
           
           console.log('Token refreshed successfully');

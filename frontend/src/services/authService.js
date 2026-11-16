@@ -93,7 +93,7 @@ export const authService = {
    */
   logout: async () => {
     try {
-      const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
+      const token = localStorage.getItem(AUTH_TOKEN_KEY);
 
       // Notify backend
       if (token) {
@@ -143,7 +143,7 @@ export const authService = {
    * Check if user is authenticated
    */
   isAuthenticated: () => {
-    const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
     return token && !isTokenExpired(token);
   },
 
@@ -152,7 +152,7 @@ export const authService = {
    */
   refreshToken: async () => {
     try {
-      const refreshToken = sessionStorage.getItem(REFRESH_TOKEN_KEY);
+      const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
       if (!refreshToken) {
         throw new Error('No refresh token available');
       }
@@ -170,7 +170,7 @@ export const authService = {
       }
 
       const data = await response.json();
-      sessionStorage.setItem(AUTH_TOKEN_KEY, data.token);
+      localStorage.setItem(AUTH_TOKEN_KEY, data.token);
 
       return {
         success: true,
@@ -189,7 +189,7 @@ export const authService = {
    */
   verifyToken: async () => {
     try {
-      const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
+      const token = localStorage.getItem(AUTH_TOKEN_KEY);
       if (!token) return false;
 
       const response = await fetch(`${API_BASE_URL}/auth/verify/`, {
@@ -240,7 +240,7 @@ export const authService = {
    */
   updateProfile: async (updates) => {
     try {
-      const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
+      const token = localStorage.getItem(AUTH_TOKEN_KEY);
       const response = await fetch(`${API_BASE_URL}/auth/profile/`, {
         method: 'PUT',
         headers: {
@@ -255,7 +255,7 @@ export const authService = {
       }
 
       const data = await response.json();
-      sessionStorage.setItem(USER_KEY, JSON.stringify(data.user));
+      localStorage.setItem(USER_KEY, JSON.stringify(data.user));
 
       return {
         success: true,
@@ -274,7 +274,7 @@ export const authService = {
    */
   changePassword: async (currentPassword, newPassword) => {
     try {
-      const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
+      const token = localStorage.getItem(AUTH_TOKEN_KEY);
       const response = await fetch(`${API_BASE_URL}/auth/change-password/`, {
         method: 'POST',
         headers: {
@@ -352,7 +352,7 @@ export const authService = {
    */
   enableTwoFactor: async () => {
     try {
-      const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
+      const token = localStorage.getItem(AUTH_TOKEN_KEY);
       const response = await fetch(`${API_BASE_URL}/auth/2fa/setup/`, {
         method: 'POST',
         headers: {
@@ -382,7 +382,7 @@ export const authService = {
    */
   verifyTwoFactor: async (code) => {
     try {
-      const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
+      const token = localStorage.getItem(AUTH_TOKEN_KEY);
       const response = await fetch(`${API_BASE_URL}/auth/2fa/verify/`, {
         method: 'POST',
         headers: {

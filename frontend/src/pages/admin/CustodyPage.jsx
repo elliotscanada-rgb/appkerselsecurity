@@ -682,7 +682,11 @@ const CustodyPage = () => {
                       <label className="block text-xs text-gray-500 mb-1">Completion Date</label>
                       <input
                         type="date"
-                        value={step.completion_date?.split('T')[0] || ''}
+                        value={
+                          step.completion_date
+                            ? step.completion_date.split('T')[0] || step.completion_date.split(' ')[0]
+                            : ''
+                        }
                         onChange={(e) => {
                           const updated = [...custodyStepsForm.steps];
                           updated[idx].completion_date = e.target.value ? `${e.target.value}T00:00:00Z` : null;

@@ -48,10 +48,17 @@ class ServiceCharge(models.Model):
         ('other', 'Other Charges'),
     ]
     
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('paid', 'Paid'),
+        ('unpaid', 'Unpaid'),
+    ]
+    
     consignment = models.ForeignKey('consignments.Consignment', on_delete=models.CASCADE, related_name='service_charges')
     charge_type = models.CharField(max_length=20, choices=CHARGE_TYPE_CHOICES)
-    amount = models.DecimalField(max_digits=15, decimal_places=2)
+    amount = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True, help_text="Leave blank to mention charge without amount")
     currency = models.CharField(max_length=3, default='USD')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     description = models.TextField(blank=True)
     
     charged_by = models.ForeignKey('staff.Staff', on_delete=models.SET_NULL, null=True)
@@ -66,7 +73,8 @@ class ServiceCharge(models.Model):
         ordering = ['-created_at']
     
     def __str__(self):
-        return f"{self.get_charge_type_display()} - {self.consignment.consignment_number}"
+        amount_str = f" - {self.amount} {self.currency}" if self.amount else " - (no amount)"
+        return f"{self.get_charge_type_display()}{amount_str} - {self.consignment.consignment_number}"
 
 
 class ChargeRemovalReason(models.Model):

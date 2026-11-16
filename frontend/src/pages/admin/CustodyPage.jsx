@@ -222,10 +222,12 @@ const CustodyPage = () => {
             })
           });
           
+          console.log(`Step ${step.step_number} response status:`, response.status);
+          
           if (!response.ok) {
             const errData = await response.json();
-            console.error('Error response:', errData);
-            throw new Error(errData.detail || errData.error || 'Failed to create custody step');
+            console.error(`Error creating step ${step.step_number}:`, errData);
+            throw new Error(`Step ${step.step_number}: ${errData.detail || errData.error || 'Failed to create custody step'}`);
           }
           const createdStep = await response.json();
           console.log('Successfully created step:', createdStep);
@@ -247,10 +249,12 @@ const CustodyPage = () => {
             })
           });
 
+          console.log(`Step ${step.id} update response status:`, response.status);
+
           if (!response.ok) {
             const errData = await response.json();
-            console.error('Error response:', errData);
-            throw new Error(errData.detail || errData.error || 'Failed to update custody step');
+            console.error(`Error updating step ${step.id}:`, errData);
+            throw new Error(`Step ${step.id}: ${errData.detail || errData.error || 'Failed to update custody step'}`);
           }
           const updatedStep = await response.json();
           console.log('Successfully updated step:', updatedStep);

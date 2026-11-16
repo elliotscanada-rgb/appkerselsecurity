@@ -41,7 +41,7 @@ class ConsignmentViewSet(viewsets.ModelViewSet):
         user = self.request.user
         base_queryset = Consignment.objects.select_related(
             'client', 'client__user', 'received_by', 'received_by__user'
-        ).prefetch_related('history', 'shipments')
+        ).prefetch_related('history', 'shipments', 'custody_steps')
         
         if user.role == 'admin':
             # Admin sees all consignments

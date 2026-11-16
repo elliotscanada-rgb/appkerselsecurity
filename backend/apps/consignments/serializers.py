@@ -179,6 +179,7 @@ class ConsignmentListSerializer(serializers.ModelSerializer):
     category_display = serializers.CharField(source='get_category_display', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     image_url = serializers.SerializerMethodField()
+    custody_steps = CustodyStepSerializer(many=True, read_only=True)
     
     class Meta:
         model = Consignment
@@ -186,7 +187,8 @@ class ConsignmentListSerializer(serializers.ModelSerializer):
             'id', 'consignment_number', 'client_name',
             'item_name', 'category_display', 'declared_value',
             'declared_value_currency', 'status', 'status_display',
-            'current_location', 'received_date', 'image', 'image_url'
+            'current_location', 'received_date', 'image', 'image_url',
+            'custody_steps'
         ]
     
     def get_image_url(self, obj):

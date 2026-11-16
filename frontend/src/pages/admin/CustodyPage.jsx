@@ -3,7 +3,7 @@ import {
   FaChartLine, FaUsers, FaUserTie, FaBox, FaCoins, FaTruck, FaWarehouse, 
   FaShieldAlt, FaFileAlt, FaHistory, FaPlus, FaArrowRight, FaClock, 
   FaUser, FaMapMarkerAlt, FaCheck, FaSpinner, FaExclamationTriangle,
-  FaEdit, FaSave, FaTimes, FaSearch
+  FaEdit, FaSave, FaTimes, FaSearch, FaTrash
 } from 'react-icons/fa';
 import Layout from '../../components/common/Layout';
 import Card from '../../components/common/Card';
@@ -125,6 +125,61 @@ const CustodyPage = () => {
     setShowCustodyStepsModal(true);
   };
 
+  // Add new custody step
+  const handleAddCustodyStep = () => {
+    const maxStepNumber = custodyStepsForm.steps.length > 0 
+      ? Math.max(...custodyStepsForm.steps.map(s => s.step_number))
+      : 0;
+    
+    const newStep = {
+      id: null, // New step has no ID yet
+      step_number: maxStepNumber + 1,
+      title: '',
+      description: '',
+      evidence_description: '',
+      status: 'not_established',
+      completion_date: null,
+      isNew: true // Mark as new so we know to POST instead of PATCH
+    };
+    
+    setCustodyStepsForm({
+      steps: [...custodyStepsForm.steps, newStep]
+    });
+  };
+
+  // Delete custody step
+  const handleDeleteCustodyStep = async (stepIndex) => {
+    const step = custodyStepsForm.steps[stepIndex];
+    
+    if (confirm('Are you sure you want to delete this custody step?')) {
+      try {
+        const token = localStorage.getItem('kestrel_token');
+        if (!token) {
+          setError('No authentication token');
+          return;
+        }
+
+        // If step already exists in DB, delete it
+        if (step.id && !step.isNew) {
+          await fetch(`${API_BASE_URL}/consignments/${selectedConsignment.id}/custody_steps/${step.id}/`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            }
+          });
+        }
+
+        // Remove from form
+        const updated = custodyStepsForm.steps.filter((_, i) => i !== stepIndex);
+        setCustodyStepsForm({ steps: updated });
+      } catch (err) {
+        console.error('Error deleting custody step:', err);
+        setError(err.message);
+      }
+    }
+  };
+
   // Save custody steps
   const handleSaveCustodySteps = async () => {
     if (!selectedConsignment) return;
@@ -136,23 +191,63 @@ const CustodyPage = () => {
         return;
       }
 
-      // Update each step
+      // Validate all steps have required fields
       for (const step of custodyStepsForm.steps) {
-        await fetch(`${API_BASE_URL}/consignments/${selectedConsignment.id}/custody_steps/${step.id}/`, {
-          method: 'PATCH',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            status: step.status,
-            completion_date: step.completion_date,
-            evidence_description: step.evidence_description,
-          })
-        });
+        if (!step.title || !step.description || !step.evidence_description) {
+          alert('All fields (Title, Description, Evidence) are required for each step');
+          return;
+        }
       }
 
-      alert('Custody steps updated successfully');
+      // Process each step
+      for (const step of custodyStepsForm.steps) {
+        if (step.isNew) {
+          // Create new step
+          const response = await fetch(`${API_BASE_URL}/consignments/${selectedConsignment.id}/custody_steps/`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              step_number: step.step_number,
+              title: step.title,
+              description: step.description,
+              evidence_description: step.evidence_description,
+              status: step.status,
+              completion_date: step.completion_date,
+            })
+          });
+          
+          if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.detail || 'Failed to create custody step');
+          }
+        } else if (step.id) {
+          // Update existing step
+          const response = await fetch(`${API_BASE_URL}/consignments/${selectedConsignment.id}/custody_steps/${step.id}/`, {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              status: step.status,
+              completion_date: step.completion_date,
+              evidence_description: step.evidence_description,
+              title: step.title,
+              description: step.description,
+            })
+          });
+
+          if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.detail || 'Failed to update custody step');
+          }
+        }
+      }
+
+      alert('Custody steps saved successfully');
       setShowCustodyStepsModal(false);
       
       // Refresh consignments
@@ -163,8 +258,8 @@ const CustodyPage = () => {
       setConsignments(consignmentsList);
       setFilteredConsignments(consignmentsList);
     } catch (err) {
-      console.error('Error updating custody steps:', err);
-      setError(err.message);
+      console.error('Error saving custody steps:', err);
+      alert(`Error: ${err.message}`);
     }
   };
 
@@ -483,17 +578,74 @@ const CustodyPage = () => {
             {/* Custody Steps */}
             <div className="space-y-3">
               {custodyStepsForm.steps.map((step, idx) => (
-                <div key={step.id || idx} className="border border-gray-700 rounded-lg p-4 space-y-3">
+                <div key={step.id || `new-${idx}`} className="border border-gray-700 rounded-lg p-4 space-y-3">
+                  {/* Header with delete button */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-gray-700">
-                    <h4 className="font-semibold text-white text-sm">Step {step.step_number}: {step.title}</h4>
-                    <span className="text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded">ID: {step.id}</span>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-white text-sm">
+                        Step {step.step_number}
+                        {step.isNew && <span className="text-cyan-400 text-xs ml-2">(New)</span>}
+                      </h4>
+                    </div>
+                    {(step.id || step.isNew) && (
+                      <button
+                        onClick={() => handleDeleteCustodyStep(idx)}
+                        className="text-xs bg-red-900/30 hover:bg-red-900/50 text-red-400 px-2 py-1 rounded border border-red-700/50 transition-colors"
+                      >
+                        Delete
+                      </button>
+                    )}
                   </div>
 
+                  {/* Step Number */}
                   <div>
-                    <p className="text-xs text-gray-500 mb-1">Description</p>
-                    <p className="text-sm text-gray-300">{step.description}</p>
+                    <label className="block text-xs text-gray-500 mb-1">Step Number</label>
+                    <input
+                      type="number"
+                      value={step.step_number}
+                      onChange={(e) => {
+                        const updated = [...custodyStepsForm.steps];
+                        updated[idx].step_number = parseInt(e.target.value) || 1;
+                        setCustodyStepsForm({ steps: updated });
+                      }}
+                      className="w-full px-2 py-1 bg-gray-700 border border-gray-600 text-gray-200 rounded text-xs focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                      min="1"
+                    />
                   </div>
 
+                  {/* Title */}
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Title *</label>
+                    <input
+                      type="text"
+                      value={step.title}
+                      onChange={(e) => {
+                        const updated = [...custodyStepsForm.steps];
+                        updated[idx].title = e.target.value;
+                        setCustodyStepsForm({ steps: updated });
+                      }}
+                      placeholder="e.g., Deposit registered"
+                      className="w-full px-2 py-1 bg-gray-700 border border-gray-600 text-gray-200 rounded text-xs focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Description *</label>
+                    <textarea
+                      value={step.description}
+                      onChange={(e) => {
+                        const updated = [...custodyStepsForm.steps];
+                        updated[idx].description = e.target.value;
+                        setCustodyStepsForm({ steps: updated });
+                      }}
+                      placeholder="Describe this step..."
+                      className="w-full px-2 py-1 bg-gray-700 border border-gray-600 text-gray-200 rounded text-xs focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                      rows="2"
+                    />
+                  </div>
+
+                  {/* Status and Date */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {/* Status */}
                     <div>
@@ -532,7 +684,7 @@ const CustodyPage = () => {
 
                   {/* Evidence Description */}
                   <div>
-                    <label className="block text-xs text-gray-500 mb-1">Evidence Description</label>
+                    <label className="block text-xs text-gray-500 mb-1">Evidence Description *</label>
                     <textarea
                       value={step.evidence_description || ''}
                       onChange={(e) => {
@@ -549,20 +701,41 @@ const CustodyPage = () => {
               ))}
             </div>
 
+            {/* Add New Step Button */}
+            <button
+              onClick={handleAddCustodyStep}
+              className="w-full bg-cyan-900/30 hover:bg-cyan-900/50 border border-cyan-600/50 text-cyan-400 px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-semibold"
+            >
+              <FaPlus /> Add New Custody Step
+            </button>
+
             {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-2 pt-4">
+            <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t border-gray-700">
               <button
                 onClick={handleSaveCustodySteps}
                 className="flex-1 btn-primary flex items-center justify-center gap-2 text-sm"
               >
-                <FaSave /> Save Changes
+                <FaSave /> Save All Changes
               </button>
               <button
                 onClick={() => setShowCustodyStepsModal(false)}
                 className="flex-1 btn-secondary flex items-center justify-center gap-2 text-sm"
               >
-                <FaTimes /> Close
+                <FaTimes /> Cancel
               </button>
+            </div>
+
+            {/* Help Text */}
+            <div className="bg-blue-900/20 border border-blue-700/50 rounded p-3 text-xs text-blue-300">
+              <p className="font-semibold mb-1">Instructions:</p>
+              <ul className="space-y-1 list-disc list-inside">
+                <li>Fill in all fields for each step (Title, Description, Evidence)</li>
+                <li>Change status to "Completed" when done</li>
+                <li>Set completion date when step is done</li>
+                <li>Click "Add New Custody Step" to add more steps</li>
+                <li>Click "Delete" to remove a step</li>
+                <li>Click "Save All Changes" when finished</li>
+              </ul>
             </div>
           </div>
         </Modal>

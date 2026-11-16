@@ -6,7 +6,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from django.db.models import Q
 
-from .models import Consignment, ConsignmentHistory
+from .models import Consignment, ConsignmentHistory, CustodyStep
 from .serializers import (
     ConsignmentSerializer,
     ConsignmentDetailSerializer,
@@ -14,7 +14,8 @@ from .serializers import (
     ConsignmentUpdateSerializer,
     ConsignmentListSerializer,
     ClientConsignmentListSerializer,
-    ConsignmentHistorySerializer
+    ConsignmentHistorySerializer,
+    CustodyStepSerializer
 )
 from apps.accounts.permissions import IsAdmin, IsStaff, IsClient
 
@@ -359,3 +360,84 @@ class ConsignmentViewSet(viewsets.ModelViewSet):
         consignment = self.get_object()
         serializer = ConsignmentDetailSerializer(consignment)
         return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'])
+    def custody_steps(self, request, pk=None):
+        """Create a new custody step for a consignment (Admin and Staff only)."""
+        if request.user.role not in ['admin', 'staff']:
+            return Response(
+                {'detail': 'Only admin and staff can create custody steps.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        consignment = self.get_object()
+        
+        # Get data from request
+        step_number = request.data.get('step_number')
+        title = request.data.get('title')
+        description = request.data.get('description')
+        evidence_description = request.data.get('evidence_description')
+        step_status = request.data.get('status', 'not_established')
+        completion_date = request.data.get('completion_date')
+        
+        # Validate required fields
+        if not all([step_number, title, description, evidence_description]):
+            return Response(
+                {'error': 'step_number, title, description, and evidence_description are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            custody_step = CustodyStep.objects.create(
+                consignment=consignment,
+                step_number=step_number,
+                title=title,
+                description=description,
+                evidence_description=evidence_description,
+                status=step_status,
+                completion_date=completion_date
+            )
+            
+            serializer = CustodyStepSerializer(custody_step)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class CustodyStepViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing individual custody steps.
+    Handles PATCH (update) and DELETE operations for custody steps.
+    """
+    
+    permission_classes = [IsAuthenticated]
+    serializer_class = CustodyStepSerializer
+    
+    def get_queryset(self):
+        """Get custody steps, filtered by consignment if provided."""
+        consignment_id = self.kwargs.get('consignment_pk')
+        if consignment_id:
+            return CustodyStep.objects.filter(consignment_id=consignment_id)
+        return CustodyStep.objects.all()
+    
+    def partial_update(self, request, *args, **kwargs):
+        """Update a custody step (PATCH)."""
+        if request.user.role not in ['admin', 'staff']:
+            return Response(
+                {'detail': 'Only admin and staff can update custody steps.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().partial_update(request, *args, **kwargs)
+    
+    def destroy(self, request, *args, **kwargs):
+        """Delete a custody step (DELETE)."""
+        if request.user.role not in ['admin', 'staff']:
+            return Response(
+                {'detail': 'Only admin and staff can delete custody steps.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().destroy(request, *args, **kwargs)
+

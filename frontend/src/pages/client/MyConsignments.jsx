@@ -261,31 +261,31 @@ const MyConsignments = () => {
                         </p>
                       </div>
 
-                      {/* Middle: Values */}
+                      {/* Middle: Physical Specs (Weight only - no money values) */}
                       <div className="flex-1 bg-gray-800 p-4 rounded-lg border border-gray-700/50">
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <p className="text-xs text-gray-500 uppercase">Declared Value</p>
+                            <p className="text-xs text-gray-500 uppercase">Quantity</p>
                             <p className="text-lg font-bold text-white">
-                              {formatCurrency(consignment.declaredValue || 0)}
+                              {consignment.quantity || 'N/A'}
                             </p>
                           </div>
                           <div>
-                            <p className="text-xs text-gray-500 uppercase">Assessed Value</p>
+                            <p className="text-xs text-gray-500 uppercase">Purity</p>
                             <p className="text-lg font-bold text-kestrel-gold">
-                              {formatCurrency(consignment.assessedValue || 0)}
+                              {consignment.purity || 'N/A'}‰
                             </p>
                           </div>
                           <div>
-                            <p className="text-xs text-gray-500 uppercase">Total Charges</p>
+                            <p className="text-xs text-gray-500 uppercase">Weight</p>
                             <p className="text-sm font-semibold text-gray-300">
-                              {formatCurrency(totalCharges)}
+                              {consignment.weight || 'N/A'} {consignment.weight_unit || 'kg'}
                             </p>
                           </div>
                           <div>
-                            <p className="text-xs text-gray-500 uppercase">Pending Charges</p>
-                            <p className="text-sm font-semibold text-red-400">
-                              {formatCurrency(pendingCharges)}
+                            <p className="text-xs text-gray-500 uppercase">Storage</p>
+                            <p className="text-sm font-semibold text-gray-300">
+                              {consignment.storageLocation || 'Secure Storage'}
                             </p>
                           </div>
                         </div>

@@ -276,7 +276,9 @@ class GoldSettingsSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         purity_min = data.get('purity_min', 0)
-        purity_max = data.get('purity_max', 1000)
+        purity_max = data.get('purity_max', 100)
         if purity_min > purity_max:
             raise serializers.ValidationError('Minimum purity cannot exceed maximum purity.')
+        if purity_max > 100:
+            raise serializers.ValidationError('Purity cannot exceed 100%.')
         return data

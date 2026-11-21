@@ -219,7 +219,7 @@ export const consignmentApi = {
    */
   updateConsignment: async (consignmentId, updates) => {
     return apiRequest(`/consignments/${consignmentId}/`, {
-      method: 'PUT',
+      method: 'PATCH',
       body: JSON.stringify(updates),
     });
   },
@@ -240,7 +240,7 @@ export const consignmentApi = {
     }
 
     const config = {
-      method: 'PUT',
+      method: 'PATCH',
       headers: defaultHeaders,
       body: formData,
     };
@@ -1190,7 +1190,7 @@ export const documentApi = {
   },
 
   /**
-   * Get documents for a specific client
+   * Get documents for a specific client (admin use)
    * @param {number} clientId - Client ID
    */
   getClientDocuments: async (clientId) => {
@@ -1198,12 +1198,21 @@ export const documentApi = {
   },
 
   /**
-   * Upload document for a client (multipart/form-data)
-   * @param {FormData} formData - Form data with client, document_type, description, file
+   * Get ALL documents visible to the current client
+   * (both consignment-linked and direct client documents)
+   */
+  getMyDocuments: async () => {
+    return apiRequest(`/documents/my-documents/`);
+  },
+
+  /**
+   * Upload a document directly to a client account (admin only).
+   * Uses the dedicated upload-to-client endpoint.
+   * @param {FormData} formData - Fields: client (ID), document_type, description, file
    */
   uploadClientDocument: async (formData) => {
-    const url = `${API_BASE_URL}/documents/`;
-    
+    const url = `${API_BASE_URL}/documents/upload-to-client/`;
+
     const defaultHeaders = {};
     const token = getAuthToken();
     if (token) {

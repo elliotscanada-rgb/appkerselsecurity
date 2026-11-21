@@ -661,7 +661,7 @@ const AdminEditAssetsPage = () => {
                       <div className="flex gap-2">
                         <input
                           type="number"
-                          step="0.01"
+                          step="0.001"
                           value={editFormData.weight}
                           onChange={(e) => setEditFormData({ ...editFormData, weight: e.target.value })}
                           className="flex-1 px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm text-white"
@@ -685,20 +685,24 @@ const AdminEditAssetsPage = () => {
                         onClick={() => setEditingField('weight')}
                         className="w-full text-left p-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded text-sm text-gray-300 flex items-center justify-between"
                       >
-                        <span>{selectedConsignment.weight || 'N/A'} {selectedConsignment.weight_unit}</span>
+                        <span>
+                          {selectedConsignment.weight != null
+                            ? `${Number(selectedConsignment.weight).toFixed(3)} ${selectedConsignment.weight_unit}`
+                            : 'N/A'}
+                        </span>
                         <FaEdit className="text-xs text-gray-500" />
                       </button>
                     )}
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-400 block mb-1">Purity (0-1000‰)</label>
+                    <label className="text-xs font-semibold text-gray-400 block mb-1">Purity % (e.g. 99.999)</label>
                     {editingField === 'purity' ? (
                       <div className="flex gap-2">
                         <input
                           type="number"
                           min="0"
-                          max="1000"
-                          step="1"
+                          max="100"
+                          step="0.001"
                           value={editFormData.purity}
                           onChange={(e) => setEditFormData({ ...editFormData, purity: e.target.value })}
                           className="flex-1 px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm text-white"
@@ -722,7 +726,11 @@ const AdminEditAssetsPage = () => {
                         onClick={() => setEditingField('purity')}
                         className="w-full text-left p-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded text-sm text-gray-300 flex items-center justify-between"
                       >
-                        <span>{selectedConsignment.purity || 'N/A'}‰</span>
+                        <span>
+                          {selectedConsignment.purity != null
+                            ? `${Number(selectedConsignment.purity).toFixed(3)}%`
+                            : 'N/A'}
+                        </span>
                         <FaEdit className="text-xs text-gray-500" />
                       </button>
                     )}

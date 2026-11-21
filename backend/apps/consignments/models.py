@@ -125,9 +125,9 @@ class Consignment(models.Model):
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
     description = models.TextField(blank=True)
     quantity = models.IntegerField(default=1)
-    weight = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    weight = models.DecimalField(max_digits=10, decimal_places=3, null=True, blank=True)
     weight_unit = models.CharField(max_length=5, choices=WEIGHT_UNIT_CHOICES, default='kg')
-    purity = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, help_text='Purity percentage')
+    purity = models.DecimalField(max_digits=8, decimal_places=3, null=True, blank=True, help_text='Purity percentage (e.g. 99.999)')
     
     # Valuation
     declared_value = models.DecimalField(max_digits=15, decimal_places=2)
@@ -215,14 +215,14 @@ class GoldSettings(models.Model):
     """Singleton model for global gold purity range configuration."""
 
     purity_min = models.DecimalField(
-        max_digits=6, decimal_places=2, default=0,
-        validators=[MinValueValidator(0), MaxValueValidator(1000)],
-        help_text='Minimum acceptable purity (0-1000‰)'
+        max_digits=8, decimal_places=3, default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text='Minimum acceptable purity % (0-100)'
     )
     purity_max = models.DecimalField(
-        max_digits=6, decimal_places=2, default=1000,
-        validators=[MinValueValidator(0), MaxValueValidator(1000)],
-        help_text='Maximum acceptable purity (0-1000‰)'
+        max_digits=8, decimal_places=3, default=100,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text='Maximum acceptable purity % (0-100)'
     )
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -232,7 +232,7 @@ class GoldSettings(models.Model):
         verbose_name_plural = 'Gold Settings'
 
     def __str__(self):
-        return f'Gold Settings: {self.purity_min}‰ – {self.purity_max}‰'
+        return f'Gold Settings: {self.purity_min}% – {self.purity_max}%'
 
     @classmethod
     def get_settings(cls):

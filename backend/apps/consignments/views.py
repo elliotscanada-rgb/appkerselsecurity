@@ -108,6 +108,26 @@ class ConsignmentViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN
             )
         return super().destroy(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        """
+        PATCH a consignment.
+        If the request does not include a new image file, preserve the
+        existing image so it never gets wiped by a metadata-only update.
+        """
+        kwargs['partial'] = True
+        consignment = self.get_object()
+
+        # If no new image was sent in this request, exclude 'image' from
+        # the data entirely so the serializer won't blank it out.
+        data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+        if 'image' not in request.FILES:
+            data.pop('image', None)
+
+        serializer = self.get_serializer(consignment, data=data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
     def my_consignments(self, request):

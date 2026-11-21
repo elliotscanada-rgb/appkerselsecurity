@@ -43,19 +43,19 @@ export const formatDateTime = (dateString) => {
 };
 
 /**
- * Format weight
+ * Format weight — always 3 decimal places (e.g. 78.000 kg)
  */
 export const formatWeight = (weight, unit = 'kg') => {
-  if (!weight && weight !== 0) return '-';
-  return `${Number(weight).toLocaleString()} ${unit}`;
+  if (weight === null || weight === undefined || weight === '') return '-';
+  return `${Number(weight).toFixed(3)} ${unit}`;
 };
 
 /**
- * Format purity
+ * Format purity — always 3 decimal places (e.g. 99.999%)
  */
 export const formatPurity = (purity) => {
-  if (!purity) return '-';
-  return `${purity}%`;
+  if (purity === null || purity === undefined || purity === '') return '-';
+  return `${Number(purity).toFixed(3)}%`;
 };
 
 /**

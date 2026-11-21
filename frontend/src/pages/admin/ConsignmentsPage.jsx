@@ -19,9 +19,16 @@ import {
   FaExclamationCircle,
   FaCheckCircle,
   FaImage,
+  FaUpload,
+  FaFilePdf,
+  FaFileWord,
+  FaFileExcel,
+  FaFileImage,
+  FaFile,
+  FaDownload,
 } from 'react-icons/fa';
 import Layout from '../../components/common/Layout';
-import { consignmentApi, clientApi, shipmentApi } from '../../services/assetApi';
+import { consignmentApi, clientApi, shipmentApi, documentApi } from '../../services/assetApi';
 
 const ConsignmentsPage = () => {
   const [consignments, setConsignments] = useState([]);
@@ -52,6 +59,16 @@ const ConsignmentsPage = () => {
   const [chargeToDelete, setChargeToDelete] = useState(null);
   const [deleteReason, setDeleteReason] = useState('cleared');
   const [deleteNotes, setDeleteNotes] = useState('');
+
+  // Document upload state
+  const [documents, setDocuments] = useState([]);
+  const [loadingDocs, setLoadingDocs] = useState(false);
+  const [showDocUpload, setShowDocUpload] = useState(false);
+  const [docUploadData, setDocUploadData] = useState({
+    document_type: 'other',
+    description: '',
+    file: null,
+  });
 
   const menuItems = [
     { path: '/admin/dashboard', label: 'Dashboard', icon: <FaChartLine /> },
@@ -127,6 +144,9 @@ const ConsignmentsPage = () => {
     setSelectedConsignment(null);
     setCharges([]);
     setShowChargeForm(false);
+    setDocuments([]);
+    setShowDocUpload(false);
+    setDocUploadData({ document_type: 'other', description: '', file: null });
     setFormData({
       client: '',
       item_name: '',
@@ -144,6 +164,7 @@ const ConsignmentsPage = () => {
       received_by: '',
       image: null,
       imagePreview: null,
+      existingImageUrl: null,
     });
     setShowForm(true);
   };
@@ -187,9 +208,14 @@ const ConsignmentsPage = () => {
         received_date: fullConsignment.received_date?.substring(0, 10) || '',
         received_by: fullConsignment.received_by || '',
         image: null,
-        imagePreview: existingImagePreview,
+        imagePreview: null,
+        // Track the server-persisted URL separately — it never gets cleared
+        // unless the admin explicitly uploads a replacement
+        existingImageUrl: existingImagePreview,
       });
       setShowForm(true);
+      // Load existing documents for this consignment
+      fetchDocuments(fullConsignment.id);
     } catch (err) {
       console.error('Failed to fetch consignment details:', err);
       setError('Failed to load consignment details');
@@ -342,6 +368,81 @@ const ConsignmentsPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Load documents for a consignment (edit mode)
+  const fetchDocuments = async (consignmentId) => {
+    try {
+      setLoadingDocs(true);
+      const data = await documentApi.getConsignmentDocuments(consignmentId);
+      if (Array.isArray(data)) {
+        setDocuments(data);
+      } else if (data?.results) {
+        setDocuments(data.results);
+      } else {
+        setDocuments([]);
+      }
+    } catch (err) {
+      console.error('Error fetching documents:', err);
+      setDocuments([]);
+    } finally {
+      setLoadingDocs(false);
+    }
+  };
+
+  const handleDocUpload = async (e) => {
+    e.preventDefault();
+    if (!docUploadData.file) {
+      setError('Please select a file to upload');
+      return;
+    }
+    if (!selectedConsignment) {
+      setError('No consignment selected');
+      return;
+    }
+    try {
+      setLoadingDocs(true);
+      const fd = new FormData();
+      fd.append('consignment', selectedConsignment.id);
+      fd.append('document_type', docUploadData.document_type);
+      fd.append('description', docUploadData.description);
+      fd.append('file', docUploadData.file);
+      await documentApi.uploadDocument(fd);
+      setSuccess('Document uploaded successfully');
+      setShowDocUpload(false);
+      setDocUploadData({ document_type: 'other', description: '', file: null });
+      fetchDocuments(selectedConsignment.id);
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      setError('Document upload failed: ' + err.message);
+    } finally {
+      setLoadingDocs(false);
+    }
+  };
+
+  const handleDeleteDocument = async (docId) => {
+    if (!window.confirm('Delete this document?')) return;
+    try {
+      setLoadingDocs(true);
+      await documentApi.deleteDocument(docId);
+      setDocuments(documents.filter(d => d.id !== docId));
+      setSuccess('Document deleted');
+      setTimeout(() => setSuccess(null), 2000);
+    } catch (err) {
+      setError('Failed to delete document: ' + err.message);
+    } finally {
+      setLoadingDocs(false);
+    }
+  };
+
+  const getFileIcon = (fileName) => {
+    if (!fileName) return <FaFile className="text-gray-400" />;
+    const ext = fileName.split('.').pop().toLowerCase();
+    if (ext === 'pdf') return <FaFilePdf className="text-red-400" />;
+    if (['doc', 'docx'].includes(ext)) return <FaFileWord className="text-blue-400" />;
+    if (['xls', 'xlsx'].includes(ext)) return <FaFileExcel className="text-green-400" />;
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return <FaFileImage className="text-purple-400" />;
+    return <FaFile className="text-gray-400" />;
   };
 
   const handleFormSubmit = async (e) => {
@@ -916,7 +1017,7 @@ const ConsignmentsPage = () => {
                   <label className="block text-sm font-semibold text-gray-300 mb-2">Weight</label>
                   <input
                     type="number"
-                    step="0.01"
+                    step="0.001"
                     value={formData.weight || ''}
                     onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
                     className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white"
@@ -938,12 +1039,13 @@ const ConsignmentsPage = () => {
                   <label className="block text-sm font-semibold text-gray-300 mb-2">Purity %</label>
                   <input
                     type="number"
-                    step="0.1"
+                    step="0.001"
                     min="0"
                     max="100"
                     value={formData.purity || ''}
                     onChange={(e) => setFormData({ ...formData, purity: e.target.value })}
                     className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white"
+                    placeholder="e.g. 99.999"
                   />
                 </div>
               </div>
@@ -1013,27 +1115,57 @@ const ConsignmentsPage = () => {
 
               {/* Asset Picture/Image Upload Section */}
               <div className="border-t border-gray-700 pt-4">
-                <label className="block text-sm font-semibold text-gray-300 mb-3">Asset Picture</label>
-                
-                {/* Image Preview */}
-                {formData.imagePreview && (
+                <label className="block text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
+                  <FaImage className="text-kestrel-gold" /> Asset Picture
+                </label>
+
+                {/*
+                  Two distinct states:
+                  1. existingImage (from server) — always shown when editing, cannot be "X'd away"
+                  2. newImage (just chosen by admin) — shown when a new file is selected, replaces on save
+                */}
+
+                {/* Show current saved image (edit mode) */}
+                {formMode === 'edit' && formData.existingImageUrl && !formData.image && (
+                  <div className="mb-4">
+                    <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
+                      <FaCheckCircle className="text-green-400" /> Current saved image
+                    </p>
+                    <img
+                      src={formData.existingImageUrl}
+                      alt="Saved asset"
+                      className="w-full h-44 object-cover rounded-lg border border-green-700/40"
+                      onError={e => { e.target.style.display = 'none'; }}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      This image is saved. Choose a new file below only if you want to replace it.
+                    </p>
+                  </div>
+                )}
+
+                {/* New image preview (just chosen, not yet saved) */}
+                {formData.image && formData.imagePreview && (
                   <div className="mb-4 relative">
-                    <img 
-                      src={formData.imagePreview} 
-                      alt="Asset preview" 
-                      className="w-full h-40 object-cover rounded border border-gray-700"
+                    <p className="text-xs text-amber-400 mb-1 flex items-center gap-1">
+                      ⚠ New image selected — will replace the saved one on submit
+                    </p>
+                    <img
+                      src={formData.imagePreview}
+                      alt="New asset preview"
+                      className="w-full h-44 object-cover rounded-lg border border-amber-500/40"
                     />
                     <button
                       type="button"
-                      onClick={() => setFormData({ ...formData, imagePreview: null, image: null })}
-                      className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 p-2 rounded"
+                      onClick={() => setFormData({ ...formData, image: null, imagePreview: null })}
+                      className="absolute top-6 right-2 bg-red-600 hover:bg-red-700 p-1.5 rounded"
+                      title="Cancel new selection"
                     >
-                      <FaTimes className="text-white" />
+                      <FaTimes className="text-white text-xs" />
                     </button>
                   </div>
                 )}
-                
-                {/* Image Upload Input */}
+
+                {/* Upload / replace button */}
                 <div className="flex items-center gap-2">
                   <label className="flex-1 px-4 py-2 bg-gray-800 border-2 border-dashed border-gray-600 hover:border-kestrel-gold rounded cursor-pointer transition">
                     <input
@@ -1047,7 +1179,7 @@ const ConsignmentsPage = () => {
                             setFormData({
                               ...formData,
                               image: file,
-                              imagePreview: event.target?.result
+                              imagePreview: event.target?.result,
                             });
                           };
                           reader.readAsDataURL(file);
@@ -1058,12 +1190,16 @@ const ConsignmentsPage = () => {
                     <div className="text-center py-2">
                       <FaImage className="text-kestrel-gold text-2xl mx-auto mb-1" />
                       <span className="text-sm text-gray-400">
-                        {formData.image ? formData.image.name : 'Click to upload or drag image'}
+                        {formData.image
+                          ? formData.image.name
+                          : formMode === 'edit' && formData.existingImageUrl
+                          ? 'Click to replace the current image'
+                          : 'Click to upload an image'}
                       </span>
                     </div>
                   </label>
                 </div>
-                <p className="text-xs text-gray-500 mt-2">Supported formats: JPG, PNG, WebP (Max 5MB)</p>
+                <p className="text-xs text-gray-500 mt-2">Supported: JPG, PNG, WebP — max 10 MB</p>
               </div>
 
               {/* Charges Section (only for edit mode) */}
@@ -1252,6 +1388,134 @@ const ConsignmentsPage = () => {
                           Cancel
                         </button>
                       </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Document Upload Section (edit mode only) */}
+              {formMode === 'edit' && selectedConsignment && (
+                <div className="border-t border-gray-700 pt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-lg font-semibold text-gray-300 flex items-center gap-2">
+                      <FaFileAlt className="text-cyan-400" />
+                      Consignment Documents
+                    </h3>
+                    {!showDocUpload && (
+                      <button
+                        type="button"
+                        onClick={() => setShowDocUpload(true)}
+                        className="px-3 py-1 bg-cyan-600 hover:bg-cyan-700 rounded text-sm font-semibold flex items-center gap-2 text-white"
+                      >
+                        <FaUpload /> Upload Document
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Upload form */}
+                  {showDocUpload && (
+                    <div className="bg-gray-800 border border-cyan-700/40 rounded p-4 mb-4 space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-300 mb-1">Document Type *</label>
+                          <select
+                            value={docUploadData.document_type}
+                            onChange={(e) => setDocUploadData({ ...docUploadData, document_type: e.target.value })}
+                            className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"
+                          >
+                            <option value="receipt">Consignment Receipt</option>
+                            <option value="valuation_certificate">Valuation Certificate</option>
+                            <option value="agreement">Consignment Agreement</option>
+                            <option value="delivery_confirmation">Delivery Confirmation</option>
+                            <option value="other">Other Document</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-300 mb-1">File *</label>
+                          <input
+                            type="file"
+                            accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp"
+                            onChange={(e) => setDocUploadData({ ...docUploadData, file: e.target.files?.[0] || null })}
+                            className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-cyan-600 file:text-white"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-300 mb-1">Description (optional)</label>
+                        <input
+                          type="text"
+                          value={docUploadData.description}
+                          onChange={(e) => setDocUploadData({ ...docUploadData, description: e.target.value })}
+                          placeholder="Brief description of this document..."
+                          className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={handleDocUpload}
+                          disabled={loadingDocs}
+                          className="flex-1 px-3 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 rounded font-semibold text-white text-sm flex items-center justify-center gap-2"
+                        >
+                          {loadingDocs ? <FaSpinner className="animate-spin" /> : <FaUpload />}
+                          Upload
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowDocUpload(false);
+                            setDocUploadData({ document_type: 'other', description: '', file: null });
+                          }}
+                          className="flex-1 px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded font-semibold text-white text-sm"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Documents list */}
+                  {loadingDocs ? (
+                    <div className="text-center py-4">
+                      <FaSpinner className="animate-spin text-cyan-400 mx-auto" />
+                    </div>
+                  ) : documents.length === 0 ? (
+                    <p className="text-sm text-gray-500 py-2">No documents uploaded for this consignment yet.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {documents.map((doc) => (
+                        <div key={doc.id} className="bg-gray-800 border border-gray-700 rounded p-3 flex items-center gap-3">
+                          <div className="text-2xl">{getFileIcon(doc.file_name)}</div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-white truncate">{doc.file_name}</p>
+                            <p className="text-xs text-cyan-400">{doc.document_type_display}</p>
+                            {doc.description && (
+                              <p className="text-xs text-gray-400 truncate">{doc.description}</p>
+                            )}
+                          </div>
+                          <div className="flex gap-2 shrink-0">
+                            {doc.file_url && (
+                              <a
+                                href={doc.file_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-2 bg-cyan-700 hover:bg-cyan-600 rounded text-white"
+                                title="Download"
+                              >
+                                <FaDownload />
+                              </a>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteDocument(doc.id)}
+                              className="p-2 bg-red-700 hover:bg-red-600 rounded text-white"
+                              title="Delete"
+                            >
+                              <FaTrash />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>

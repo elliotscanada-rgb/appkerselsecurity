@@ -353,7 +353,13 @@ const ClientDashboard = () => {
                             loading="lazy"
                             onError={(e) => {
                               e.target.style.display = 'none';
-                              e.target.parentElement.style.background = 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)';
+                              const parent = e.target.parentElement;
+                              if (parent && !parent.querySelector('.img-fallback')) {
+                                const fb = document.createElement('div');
+                                fb.className = 'img-fallback w-full h-full bg-gradient-to-br from-yellow-100 to-yellow-200 flex items-center justify-center';
+                                fb.innerHTML = '<div style="color:#92400e;font-size:3rem;opacity:0.3">📦</div>';
+                                parent.appendChild(fb);
+                              }
                             }}
                           />
                         ) : (
@@ -403,11 +409,15 @@ const ClientDashboard = () => {
                         </div>
                         <div className="min-w-0 overflow-hidden">
                           <p className="text-xs text-gray-500 truncate">Weight</p>
-                          <p className="font-semibold text-xs sm:text-sm text-gray-200 break-words">{asset.weight}{asset.weightUnit}</p>
+                          <p className="font-semibold text-xs sm:text-sm text-gray-200 break-words">
+                            {asset.weight != null ? Number(asset.weight).toFixed(3) : 'N/A'}{asset.weightUnit}
+                          </p>
                         </div>
                         <div className="min-w-0 overflow-hidden">
                           <p className="text-xs text-gray-500 truncate">Purity</p>
-                          <p className="font-semibold text-xs sm:text-sm text-gray-200 break-words">{asset.purity}‰</p>
+                          <p className="font-semibold text-xs sm:text-sm text-gray-200 break-words">
+                            {asset.purity != null ? `${Number(asset.purity).toFixed(3)}%` : 'N/A'}
+                          </p>
                         </div>
                       </div>
 

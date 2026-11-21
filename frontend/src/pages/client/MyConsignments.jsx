@@ -273,13 +273,13 @@ const MyConsignments = () => {
                         <div>
                           <p className="text-xs text-gray-500 uppercase">Purity</p>
                           <p className="text-lg font-bold text-kestrel-gold">
-                            {consignment.purity || 'N/A'}‰
+                            {consignment.purity != null ? `${Number(consignment.purity).toFixed(3)}%` : 'N/A'}
                           </p>
                         </div>
                         <div>
                           <p className="text-xs text-gray-500 uppercase">Weight</p>
                           <p className="text-sm font-semibold text-gray-300">
-                            {consignment.weight || 'N/A'} {consignment.weight_unit || 'kg'}
+                            {consignment.weight != null ? `${Number(consignment.weight).toFixed(3)} ${consignment.weight_unit || 'kg'}` : 'N/A'}
                           </p>
                         </div>
                         </div>
@@ -341,6 +341,22 @@ const MyConsignments = () => {
                 <div>
                   <p className="text-sm text-gray-400">Quantity</p>
                   <p className="font-semibold text-white">{selectedConsignment.quantity || 0} pieces</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400">Weight</p>
+                  <p className="font-semibold text-white">
+                    {selectedConsignment.weight != null
+                      ? `${Number(selectedConsignment.weight).toFixed(3)} ${selectedConsignment.weight_unit || 'kg'}`
+                      : 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400">Purity</p>
+                  <p className="font-semibold text-kestrel-gold">
+                    {selectedConsignment.purity != null
+                      ? `${Number(selectedConsignment.purity).toFixed(3)}%`
+                      : 'N/A'}
+                  </p>
                 </div>
               </div>
             </div>

@@ -690,12 +690,15 @@ const CustodyPage = () => {
                         type="date"
                         value={
                           step.completion_date
-                            ? step.completion_date.split('T')[0] || step.completion_date.split(' ')[0]
+                            ? (step.completion_date.includes('T')
+                                ? step.completion_date.split('T')[0]
+                                : step.completion_date.split(' ')[0])
                             : ''
                         }
                         onChange={(e) => {
                           const updated = [...custodyStepsForm.steps];
-                          updated[idx].completion_date = e.target.value ? `${e.target.value}T00:00:00Z` : null;
+                          // Store plain YYYY-MM-DD — backend accepts both date and datetime strings
+                          updated[idx].completion_date = e.target.value || null;
                           setCustodyStepsForm({ steps: updated });
                         }}
                         className="w-full px-2 py-1 bg-gray-700 border border-gray-600 text-gray-200 rounded text-xs focus:outline-none focus:ring-2 focus:ring-cyan-500"

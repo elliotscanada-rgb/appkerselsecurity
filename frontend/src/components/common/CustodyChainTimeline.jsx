@@ -124,10 +124,15 @@ const CustodyChainTimeline = ({ consignment }) => {
                     {/* Completion date if available */}
                     {step.completion_date && (
                       <p className="text-gray-400 text-xs mt-2">
-                        <span className="font-semibold">Completed:</span> {new Date(step.completion_date).toLocaleDateString('en-US', {
+                        <span className="font-semibold">Completed:</span>{' '}
+                        {new Date(
+                          step.completion_date.includes('T')
+                            ? step.completion_date
+                            : step.completion_date + 'T00:00:00'
+                        ).toLocaleDateString('en-US', {
                           year: 'numeric',
                           month: 'long',
-                          day: 'numeric'
+                          day: 'numeric',
                         })}
                       </p>
                     )}

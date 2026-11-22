@@ -47,6 +47,7 @@ const ConsignmentsPage = () => {
     charge_type: '',
     amount: '',
     description: '',
+    status: 'pending',
   });
   const [charges, setCharges] = useState([]);
   const [showShipmentModal, setShowShipmentModal] = useState(false);
@@ -261,6 +262,7 @@ const ConsignmentsPage = () => {
         charge_type: chargeFormData.charge_type,
         amount: parseFloat(chargeFormData.amount),
         description: chargeFormData.description || '',
+        status: chargeFormData.status || 'pending',
       });
       
       // Add the new charge to the list
@@ -1265,21 +1267,32 @@ const ConsignmentsPage = () => {
                                 <option value="handling">Handling Fee</option>
                                 <option value="transportation">Transportation Fee</option>
                                 <option value="insurance">Insurance Fee</option>
+                                <option value="monthly_safekeeping">Monthly Safekeeping Fee</option>
+                                <option value="demurrage">Demurrage</option>
                                 <option value="other">Other</option>
                               </select>
                               <input
                                 type="number"
                                 step="0.01"
-                                value={editChargeData.amount || charge.amount}
+                                value={editChargeData.amount !== undefined ? editChargeData.amount : charge.amount}
                                 onChange={(e) => setEditChargeData({ ...editChargeData, amount: parseFloat(e.target.value) })}
                                 className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"
                               />
                               <textarea
-                                value={editChargeData.description || charge.description}
+                                value={editChargeData.description !== undefined ? editChargeData.description : charge.description}
                                 onChange={(e) => setEditChargeData({ ...editChargeData, description: e.target.value })}
                                 className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"
                                 rows="2"
                               />
+                              <select
+                                value={editChargeData.status !== undefined ? editChargeData.status : charge.status}
+                                onChange={(e) => setEditChargeData({ ...editChargeData, status: e.target.value })}
+                                className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"
+                              >
+                                <option value="pending">Pending</option>
+                                <option value="unpaid">Unpaid</option>
+                                <option value="paid">Paid</option>
+                              </select>
                               <div className="flex gap-2">
                                 <button
                                   type="button"
@@ -1311,7 +1324,18 @@ const ConsignmentsPage = () => {
                                     <p className="text-sm text-gray-400">{charge.description}</p>
                                   )}
                                 </div>
-                                <span className="font-bold text-kestrel-gold">${parseFloat(charge.amount).toFixed(2)}</span>
+                                <div className="text-right">
+                                  <span className="font-bold text-kestrel-gold block">${parseFloat(charge.amount).toFixed(2)}</span>
+                                  <span className={`text-xs px-2 py-0.5 rounded font-semibold mt-1 inline-block ${
+                                    charge.status === 'paid'
+                                      ? 'bg-green-900/40 text-green-400'
+                                      : charge.status === 'unpaid'
+                                      ? 'bg-red-900/40 text-red-400'
+                                      : 'bg-yellow-900/40 text-yellow-400'
+                                  }`}>
+                                    {charge.status === 'paid' ? 'Paid' : charge.status === 'unpaid' ? 'Unpaid' : 'Pending'}
+                                  </span>
+                                </div>
                               </div>
                               <div className="flex gap-1">
                                 <button
@@ -1367,6 +1391,8 @@ const ConsignmentsPage = () => {
                             <option value="handling">Handling Fee</option>
                             <option value="transportation">Transportation Fee</option>
                             <option value="insurance">Insurance Fee</option>
+                            <option value="monthly_safekeeping">Monthly Safekeeping Fee</option>
+                            <option value="demurrage">Demurrage</option>
                             <option value="other">Other Charges</option>
                           </select>
                         </div>
@@ -1394,6 +1420,18 @@ const ConsignmentsPage = () => {
                           placeholder="Charge details..."
                         />
                       </div>
+                      <div className="mb-4">
+                        <label className="block text-sm font-semibold text-gray-300 mb-2">Payment Status</label>
+                        <select
+                          value={chargeFormData.status}
+                          onChange={(e) => setChargeFormData({ ...chargeFormData, status: e.target.value })}
+                          className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white"
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="unpaid">Unpaid</option>
+                          <option value="paid">Paid</option>
+                        </select>
+                      </div>
                       <div className="flex gap-2">
                         <button
                           type="button"
@@ -1408,7 +1446,7 @@ const ConsignmentsPage = () => {
                           type="button"
                           onClick={() => {
                             setShowChargeForm(false);
-                            setChargeFormData({ charge_type: '', amount: '', description: '' });
+                            setChargeFormData({ charge_type: '', amount: '', description: '', status: 'pending' });
                           }}
                           className="flex-1 px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded font-semibold"
                         >

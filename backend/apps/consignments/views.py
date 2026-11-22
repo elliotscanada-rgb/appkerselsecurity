@@ -251,22 +251,24 @@ class ConsignmentViewSet(viewsets.ModelViewSet):
         charge_type = request.data.get('charge_type')
         amount = request.data.get('amount')
         description = request.data.get('description', '')
-        
+        charge_status = request.data.get('status', 'pending')
+
         if not charge_type or not amount:
             return Response(
                 {'error': 'charge_type and amount are required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         try:
             charge = ServiceCharge.objects.create(
                 consignment=consignment,
                 charge_type=charge_type,
                 amount=amount,
                 description=description,
+                status=charge_status,
                 charged_by=request.user.staff_profile if hasattr(request.user, 'staff_profile') else None
             )
-            
+
             serializer = ServiceChargeSerializer(charge)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Exception as e:
@@ -304,6 +306,8 @@ class ConsignmentViewSet(viewsets.ModelViewSet):
                 charge.description = request.data.get('description')
             if 'charge_type' in request.data:
                 charge.charge_type = request.data.get('charge_type')
+            if 'status' in request.data:
+                charge.status = request.data.get('status')
             
             charge.save()
             serializer = ServiceChargeSerializer(charge)

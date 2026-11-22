@@ -125,7 +125,7 @@ const ClientDashboard = () => {
         ? asset.service_charges.map(charge => ({
             type: charge.charge_type_display || charge.charge_type,
             amount: parseFloat(charge.amount || 0),
-            status: charge.status || (asset.status === 'completed' ? 'paid' : 'pending'),
+            status: charge.status || 'pending',   // use the actual stored status
             description: charge.description,
             chargedBy: charge.charged_by_name,
             createdAt: charge.created_at
@@ -421,17 +421,15 @@ const ClientDashboard = () => {
                         </div>
                       </div>
 
-                      {/* Fees Section - Hidden, kept in data but not displayed */}
-                      {false && (
+                      {/* Charges Section - shown when charges exist */}
+                      {Array.isArray(asset.charges) && asset.charges.length > 0 && (
                       <div className="border-t border-gray-700 pt-4 overflow-hidden">
                         <h4 className="font-semibold text-gray-300 mb-3 flex items-center gap-2 truncate">
                           <FaCoins className="text-cyan-400 flex-shrink-0" />
-                          <span className="truncate">Fee Breakdown</span>
+                          <span className="truncate">Service Charges</span>
                         </h4>
                         <div className="space-y-2">
-                          {Array.isArray(asset.charges) && asset.charges.length > 0 ? (
-                            <>
-                              {asset.charges.map((charge, idx) => (
+                          {asset.charges.map((charge, idx) => (
                                 <div key={idx} className="flex flex-col sm:flex-row justify-between items-start gap-2 text-xs sm:text-sm bg-gray-800/50 p-2 sm:p-3 rounded overflow-hidden">
                                   <div className="flex-1 min-w-0 overflow-hidden">
                                     <p className="text-gray-300 font-semibold truncate">
@@ -440,33 +438,34 @@ const ClientDashboard = () => {
                                     {charge.description && (
                                       <p className="text-xs text-gray-500 mt-1 line-clamp-2">{charge.description}</p>
                                     )}
-                                    {charge.chargedBy && (
-                                      <p className="text-xs text-gray-500">Company Policy</p>
-                                    )}
                                   </div>
-                                  <div className="text-right whitespace-nowrap">
-                                    <span className="font-semibold text-gray-200 block break-words">{formatCurrency(charge.amount)}</span>
-                                    <span className="text-xs text-gray-500">{charge.createdAt ? new Date(charge.createdAt).toLocaleDateString() : 'N/A'}</span>
+                                  <div className="text-right whitespace-nowrap flex flex-col items-end gap-1">
+                                    <span className="font-semibold text-gray-200">{formatCurrency(charge.amount)}</span>
+                                    <span className={`text-xs px-2 py-0.5 rounded font-bold ${
+                                      charge.status === 'paid'
+                                        ? 'bg-green-900/50 text-green-400'
+                                        : charge.status === 'unpaid'
+                                        ? 'bg-red-900/50 text-red-400'
+                                        : 'bg-yellow-900/50 text-yellow-400'
+                                    }`}>
+                                      {charge.status === 'paid' ? '✓ Paid' : charge.status === 'unpaid' ? '✗ Unpaid' : '⏳ Pending'}
+                                    </span>
                                   </div>
                                 </div>
                               ))}
-                              
+
                               {/* Total Fees */}
                               <div className="border-t border-gray-700 pt-2 mt-3 flex flex-col sm:flex-row justify-between items-start sm:items-center font-bold gap-2">
-                                <span className="text-gray-300">Total Fees:</span>
+                                <span className="text-gray-300">Total Charges:</span>
                                 <span className="text-lg text-cyan-400 break-words">{formatCurrency(totalFees)}</span>
                               </div>
 
-                              {/* Pending Fees Badge */}
+                              {/* Pending Badge */}
                               {isPending && (
                                 <div className="mt-2 bg-yellow-900/30 border border-yellow-600/50 rounded px-3 py-1 text-xs text-yellow-300">
-                                  ⚠️ Pending: {formatCurrency(pendingFees)}
+                                  ⚠️ Outstanding: {formatCurrency(pendingFees)}
                                 </div>
                               )}
-                            </>
-                          ) : (
-                            <p className="text-xs text-gray-500">No fees applied</p>
-                          )}
                         </div>
                       </div>
                       )}

@@ -1,9 +1,9 @@
 import { format, parseISO } from 'date-fns';
 
 /**
- * Format currency with symbol
+ * Format currency with symbol — defaults to GBP (£)
  */
-export const formatCurrency = (amount, currency = 'USD') => {
+export const formatCurrency = (amount, currency = 'GBP') => {
   if (!amount && amount !== 0) return '-';
   
   const symbols = {
@@ -14,7 +14,7 @@ export const formatCurrency = (amount, currency = 'USD') => {
   };
 
   const symbol = symbols[currency] || currency;
-  const formattedAmount = Number(amount).toLocaleString('en-US', {
+  const formattedAmount = Number(amount).toLocaleString('en-GB', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });

@@ -440,7 +440,7 @@ const ClientDashboard = () => {
                                     )}
                                   </div>
                                   <div className="text-right whitespace-nowrap flex flex-col items-end gap-1">
-                                    <span className="font-semibold text-gray-200">{formatCurrency(charge.amount)}</span>
+                                    <span className="font-semibold text-gray-200">{formatCurrency(charge.amount, 'GBP')}</span>
                                     <span className={`text-xs px-2 py-0.5 rounded font-bold ${
                                       charge.status === 'paid'
                                         ? 'bg-green-900/50 text-green-400'
@@ -453,19 +453,6 @@ const ClientDashboard = () => {
                                   </div>
                                 </div>
                               ))}
-
-                              {/* Total Fees */}
-                              <div className="border-t border-gray-700 pt-2 mt-3 flex flex-col sm:flex-row justify-between items-start sm:items-center font-bold gap-2">
-                                <span className="text-gray-300">Total Charges:</span>
-                                <span className="text-lg text-cyan-400 break-words">{formatCurrency(totalFees)}</span>
-                              </div>
-
-                              {/* Pending Badge */}
-                              {isPending && (
-                                <div className="mt-2 bg-yellow-900/30 border border-yellow-600/50 rounded px-3 py-1 text-xs text-yellow-300">
-                                  ⚠️ Outstanding: {formatCurrency(pendingFees)}
-                                </div>
-                              )}
                         </div>
                       </div>
                       )}

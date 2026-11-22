@@ -827,7 +827,7 @@ const ConsignmentsPage = () => {
                 <span className="font-semibold">{chargeToDelete.charge_type_display}</span>
               </p>
               <p className="text-lg font-bold text-kestrel-gold">
-                ${parseFloat(chargeToDelete.amount).toFixed(2)}
+                £{parseFloat(chargeToDelete.amount).toFixed(2)}
               </p>
             </div>
 
@@ -1325,7 +1325,7 @@ const ConsignmentsPage = () => {
                                   )}
                                 </div>
                                 <div className="text-right">
-                                  <span className="font-bold text-kestrel-gold block">${parseFloat(charge.amount).toFixed(2)}</span>
+                                  <span className="font-bold text-kestrel-gold block">£{parseFloat(charge.amount).toFixed(2)}</span>
                                   <span className={`text-xs px-2 py-0.5 rounded font-semibold mt-1 inline-block ${
                                     charge.status === 'paid'
                                       ? 'bg-green-900/40 text-green-400'
@@ -1366,7 +1366,7 @@ const ConsignmentsPage = () => {
                       <div className="border-t border-gray-700 pt-2 flex justify-between items-center font-bold">
                         <span className="text-gray-300">Total Charges:</span>
                         <span className="text-lg text-kestrel-gold">
-                          ${charges.reduce((sum, c) => sum + parseFloat(c.amount), 0).toFixed(2)}
+                          £{charges.reduce((sum, c) => sum + parseFloat(c.amount), 0).toFixed(2)}
                         </span>
                       </div>
                     </div>

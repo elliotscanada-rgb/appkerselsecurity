@@ -2,8 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   FaBox,
   FaFileAlt,
-  FaBell,
-  FaUser,
   FaDownload,
   FaSpinner,
   FaExclamationCircle,
@@ -14,10 +12,6 @@ import {
   FaFileExcel,
   FaFile,
   FaSearch,
-  FaCalendar,
-  FaTruck,
-  FaChartLine,
-  FaTags,
   FaInbox,
 } from 'react-icons/fa';
 import UserNavBar from '../../components/common/UserNavBar';
@@ -55,13 +49,6 @@ function getDocumentTypeLabel(type) {
     appraisal:             'Appraisal',
   };
   return map[type] || type;
-}
-
-function formatDate(dateString) {
-  if (!dateString) return 'N/A';
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric', month: 'short', day: 'numeric',
-  });
 }
 
 // Badge colour for the document "scope" pill
@@ -299,17 +286,6 @@ const DocumentsPage = () => {
                       </p>
                       {doc.description && (
                         <p className="text-xs text-gray-400 mt-1 line-clamp-2">{doc.description}</p>
-                      )}
-                    </div>
-
-                    {/* Meta */}
-                    <div className="flex items-center gap-3 text-xs text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <FaCalendar />
-                        {formatDate(doc.upload_date || doc.uploaded_at || doc.created_at)}
-                      </span>
-                      {doc.uploaded_by_email && (
-                        <span className="truncate">By: {doc.uploaded_by_email}</span>
                       )}
                     </div>
 

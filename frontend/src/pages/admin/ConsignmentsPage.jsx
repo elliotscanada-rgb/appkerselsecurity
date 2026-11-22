@@ -493,7 +493,17 @@ const ConsignmentsPage = () => {
           const response = await consignmentApi.createConsignmentWithImage(formDataWithImage);
           setSuccess('Consignment created successfully with image');
         } else {
-          await consignmentApi.updateConsignmentWithImage(selectedConsignment.id, formDataWithImage);
+          const response = await consignmentApi.updateConsignmentWithImage(selectedConsignment.id, formDataWithImage);
+          // Refresh existingImageUrl from server so the saved image is always shown
+          const updated = response?.data || response;
+          if (updated?.image_url) {
+            setFormData(prev => ({
+              ...prev,
+              image: null,
+              imagePreview: null,
+              existingImageUrl: updated.image_url,
+            }));
+          }
           setSuccess('Consignment updated successfully');
         }
       } else {
@@ -502,7 +512,13 @@ const ConsignmentsPage = () => {
           const response = await consignmentApi.createConsignment(submitData);
           setSuccess('Consignment created successfully');
         } else {
-          await consignmentApi.updateConsignment(selectedConsignment.id, submitData);
+          const response = await consignmentApi.updateConsignment(selectedConsignment.id, submitData);
+          // Keep existingImageUrl intact — PATCH never clears the image server-side
+          // but re-sync in case the server returns updated image_url
+          const updated = response?.data || response;
+          if (updated?.image_url) {
+            setFormData(prev => ({ ...prev, existingImageUrl: updated.image_url }));
+          }
           setSuccess('Consignment updated successfully');
         }
       }
@@ -1131,12 +1147,23 @@ const ConsignmentsPage = () => {
                     <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
                       <FaCheckCircle className="text-green-400" /> Current saved image
                     </p>
-                    <img
-                      src={formData.existingImageUrl}
-                      alt="Saved asset"
-                      className="w-full h-44 object-cover rounded-lg border border-green-700/40"
-                      onError={e => { e.target.style.display = 'none'; }}
-                    />
+                    <div className="w-full h-44 rounded-lg border border-green-700/40 overflow-hidden bg-gray-800 flex items-center justify-center">
+                      <img
+                        src={formData.existingImageUrl}
+                        alt="Saved asset"
+                        className="w-full h-full object-cover"
+                        onError={e => {
+                          e.target.style.display = 'none';
+                          const wrap = e.target.parentElement;
+                          if (wrap && !wrap.querySelector('.img-err')) {
+                            const fb = document.createElement('div');
+                            fb.className = 'img-err flex flex-col items-center justify-center text-gray-500 gap-2';
+                            fb.innerHTML = '<span style="font-size:2.5rem">🖼️</span><span style="font-size:0.75rem">Image loading…</span>';
+                            wrap.appendChild(fb);
+                          }
+                        }}
+                      />
+                    </div>
                     <p className="text-xs text-gray-500 mt-1">
                       This image is saved. Choose a new file below only if you want to replace it.
                     </p>

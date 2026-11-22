@@ -246,7 +246,7 @@ const ClientDashboard = () => {
                       </p>
                     ) : (
                       <p className="text-2xl lg:text-4xl font-bold text-cyan-300">
-                        {(portfolio?.total_gold_weight_kg || normalizedAssets.filter(a => a.category === 'gold_bars' || a.category === 'gold_jewellery').reduce((sum, a) => sum + (parseFloat(a.weight || 0)), 0)).toFixed(2)} kg
+                        {(portfolio?.total_gold_weight_kg || normalizedAssets.filter(a => a.category === 'gold_bars' || a.category === 'gold_jewellery').reduce((sum, a) => sum + (parseFloat(a.weight || 0)), 0)).toFixed(3)} kg
                       </p>
                     )}
                   </div>

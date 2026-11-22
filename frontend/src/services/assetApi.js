@@ -1177,16 +1177,52 @@ export const documentApi = {
   },
 
   /**
-   * Download document file
-   * @param {number} documentId - Document ID
+   * Download a document file — authenticated, forces Save-As dialog.
+   *
+   * Calls the backend /documents/{id}/download/ endpoint which streams
+   * the file with Content-Disposition: attachment.  We fetch with the
+   * JWT token, convert to a Blob, then trigger a browser download via a
+   * temporary <a> element — works for all file types (PDF, images, docs).
+   *
+   * @param {number} documentId  - Document ID
+   * @param {string} fileName    - Suggested save-as filename
    */
-  downloadDocument: async (documentId) => {
-    const doc = await apiRequest(`/documents/${documentId}/`);
-    if (doc.file) {
-      // Open in new tab to trigger download
-      window.open(doc.file, '_blank');
+  downloadDocument: async (documentId, fileName = 'document') => {
+    const url = `${API_BASE_URL}/documents/${documentId}/download/`;
+
+    const headers = {};
+    const token = getAuthToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
-    return doc;
+
+    const response = await fetch(url, { method: 'GET', headers });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.detail || errorData.message || `Download failed: ${response.status}`
+      );
+    }
+
+    // Try to read the filename from the Content-Disposition header
+    const disposition = response.headers.get('Content-Disposition') || '';
+    const match = disposition.match(/filename[^;=\n]*=(?:(['"])([^'"]*)\1|([^;\n]*))/i);
+    const resolvedName = (match && (match[2] || match[3])?.trim()) || fileName;
+
+    const blob = await response.blob();
+
+    // Create a temporary object URL and click it to trigger Save-As
+    const objectUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = objectUrl;
+    anchor.download = resolvedName;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+
+    // Release the object URL after a short delay
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
   },
 
   /**

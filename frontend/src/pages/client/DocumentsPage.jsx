@@ -5,6 +5,7 @@ import {
   FaDownload,
   FaSpinner,
   FaExclamationCircle,
+  FaCheckCircle,
   FaFolder,
   FaFilePdf,
   FaFileImage,
@@ -13,6 +14,7 @@ import {
   FaFile,
   FaSearch,
   FaInbox,
+  FaTimes,
 } from 'react-icons/fa';
 import UserNavBar from '../../components/common/UserNavBar';
 import { documentApi, consignmentApi } from '../../services/assetApi';
@@ -42,7 +44,6 @@ function getDocumentTypeLabel(type) {
     insurance:             'Insurance Document',
     customs:               'Customs / Export Document',
     other:                 'Other',
-    // legacy keys
     invoice:               'Invoice',
     contract:              'Contract',
     certificate:           'Certificate',
@@ -51,49 +52,55 @@ function getDocumentTypeLabel(type) {
   return map[type] || type;
 }
 
-// Badge colour for the document "scope" pill
 function scopeBadge(doc) {
   if (doc.consignment) {
-    return { label: doc.consignment_number || 'Consignment', cls: 'bg-indigo-900/40 text-indigo-300 border-indigo-700/40' };
+    return {
+      label: doc.consignment_number || 'Consignment',
+      cls: 'bg-indigo-900/40 text-indigo-300 border-indigo-700/40',
+    };
   }
   return { label: 'Account Document', cls: 'bg-cyan-900/40 text-cyan-300 border-cyan-700/40' };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────────────────────────────────────
+
+const FILTER_ALL         = 'all';
+const FILTER_ACCOUNT     = 'account';
+const FILTER_CONSIGNMENT = 'consignment';
+
+// ─────────────────────────────────────────────────────────────────────────────
 // DocumentsPage
 // ─────────────────────────────────────────────────────────────────────────────
 
-const FILTER_ALL        = 'all';
-const FILTER_ACCOUNT    = 'account';     // client-scoped (no consignment)
-const FILTER_CONSIGNMENT = 'consignment'; // tied to a consignment
-
 const DocumentsPage = () => {
   const [allDocuments, setAllDocuments]   = useState([]);
-  const [consignments, setConsignments]   = useState([]);
   const [loading, setLoading]             = useState(true);
   const [error, setError]                 = useState(null);
   const [searchTerm, setSearchTerm]       = useState('');
   const [scopeFilter, setScopeFilter]     = useState(FILTER_ALL);
-  const [consignFilter, setConsignFilter] = useState('all'); // filter by consignment number
+  const [consignFilter, setConsignFilter] = useState('all');
 
-  // ── Fetch everything once ─────────────────────────────────────────────── //
+  // Per-card download state: { [docId]: 'idle' | 'downloading' | 'done' | 'error' }
+  const [downloadState, setDownloadState] = useState({});
+
+  // ── Load all documents ──────────────────────────────────────────────── //
   const loadAll = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Fetch both in parallel
       const [docsData, consignData] = await Promise.all([
         documentApi.getMyDocuments().catch(() => null),
         consignmentApi.getMyConsignments().catch(() => []),
       ]);
 
-      // Normalise documents
       let docs = [];
       if (Array.isArray(docsData)) docs = docsData;
       else if (docsData?.results) docs = docsData.results;
 
-      // If getMyDocuments isn't implemented yet, fall back to per-consignment
+      // Fallback: fetch per-consignment if unified endpoint returned nothing
       if (docs.length === 0 && Array.isArray(consignData) && consignData.length > 0) {
         const perConsignment = await Promise.all(
           consignData.map(c =>
@@ -104,7 +111,6 @@ const DocumentsPage = () => {
       }
 
       setAllDocuments(docs);
-      setConsignments(Array.isArray(consignData) ? consignData : []);
     } catch (err) {
       console.error('Error loading documents:', err);
       setError(err.message || 'Failed to load documents');
@@ -115,16 +121,11 @@ const DocumentsPage = () => {
 
   useEffect(() => { loadAll(); }, [loadAll]);
 
-  // ── Derived / filtered list ───────────────────────────────────────────── //
+  // ── Filtered list ───────────────────────────────────────────────────── //
   const filtered = allDocuments.filter(doc => {
-    // scope filter
-    if (scopeFilter === FILTER_ACCOUNT && doc.consignment) return false;
+    if (scopeFilter === FILTER_ACCOUNT     &&  doc.consignment) return false;
     if (scopeFilter === FILTER_CONSIGNMENT && !doc.consignment) return false;
-
-    // per-consignment filter
     if (consignFilter !== 'all' && doc.consignment_number !== consignFilter) return false;
-
-    // text search
     if (searchTerm) {
       const q = searchTerm.toLowerCase();
       return (
@@ -137,16 +138,90 @@ const DocumentsPage = () => {
     return true;
   });
 
-  // Unique consignment numbers for the filter dropdown
   const consignmentNumbers = [
     ...new Set(allDocuments.map(d => d.consignment_number).filter(Boolean)),
   ];
 
-  // ── Download handler ──────────────────────────────────────────────────── //
-  const handleDownload = (doc) => {
-    const url = doc.file_url || doc.file_path || doc.file;
-    if (url) window.open(url, '_blank');
-    else alert('File URL not available');
+  // ── Download handler ─────────────────────────────────────────────────── //
+  const handleDownload = async (doc) => {
+    const docId = doc.id;
+
+    // Don't re-trigger while already downloading
+    if (downloadState[docId] === 'downloading') return;
+
+    setDownloadState(prev => ({ ...prev, [docId]: 'downloading' }));
+
+    try {
+      // Primary path: authenticated download endpoint (streams file with
+      // Content-Disposition: attachment, works behind JWT auth)
+      await documentApi.downloadDocument(docId, doc.file_name || 'document');
+      setDownloadState(prev => ({ ...prev, [docId]: 'done' }));
+      // Reset to idle after 3 s so the button returns to normal
+      setTimeout(() => setDownloadState(prev => ({ ...prev, [docId]: 'idle' })), 3000);
+    } catch (primaryErr) {
+      console.warn('Authenticated download failed, trying direct URL:', primaryErr.message);
+
+      // Fallback: try the file_url directly (works when server allows public access)
+      const directUrl = doc.file_url || doc.file_path || doc.file;
+      if (directUrl) {
+        try {
+          const res = await fetch(directUrl);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const blob = await res.blob();
+          const objectUrl = URL.createObjectURL(blob);
+          const anchor = document.createElement('a');
+          anchor.href = objectUrl;
+          anchor.download = doc.file_name || 'document';
+          document.body.appendChild(anchor);
+          anchor.click();
+          document.body.removeChild(anchor);
+          setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
+          setDownloadState(prev => ({ ...prev, [docId]: 'done' }));
+          setTimeout(() => setDownloadState(prev => ({ ...prev, [docId]: 'idle' })), 3000);
+        } catch (fallbackErr) {
+          console.error('Direct URL download also failed:', fallbackErr.message);
+          // Last resort: open in new tab
+          window.open(directUrl, '_blank');
+          setDownloadState(prev => ({ ...prev, [docId]: 'idle' }));
+        }
+      } else {
+        console.error('No file URL available for document', docId);
+        setDownloadState(prev => ({ ...prev, [docId]: 'error' }));
+        setTimeout(() => setDownloadState(prev => ({ ...prev, [docId]: 'idle' })), 4000);
+      }
+    }
+  };
+
+  // ── Download button renderer ─────────────────────────────────────────── //
+  const DownloadButton = ({ doc }) => {
+    const state = downloadState[doc.id] || 'idle';
+    const isDownloading = state === 'downloading';
+    const isDone        = state === 'done';
+    const isError       = state === 'error';
+
+    let label   = <><FaDownload /> Download</>;
+    let classes = 'bg-cyan-600 hover:bg-cyan-700';
+
+    if (isDownloading) {
+      label   = <><FaSpinner className="animate-spin" /> Downloading…</>;
+      classes = 'bg-cyan-800 cursor-wait';
+    } else if (isDone) {
+      label   = <><FaCheckCircle /> Downloaded</>;
+      classes = 'bg-green-700';
+    } else if (isError) {
+      label   = <><FaTimes /> Failed — retry</>;
+      classes = 'bg-red-700 hover:bg-red-600';
+    }
+
+    return (
+      <button
+        onClick={() => handleDownload(doc)}
+        disabled={isDownloading}
+        className={`mt-auto w-full px-4 py-2 ${classes} disabled:opacity-70 text-white font-semibold rounded-lg flex items-center justify-center gap-2 text-sm transition`}
+      >
+        {label}
+      </button>
+    );
   };
 
   // ─────────────────────────────────────────────────────────────────────── //
@@ -189,12 +264,12 @@ const DocumentsPage = () => {
             </div>
           )}
 
-          {/* Summary pills */}
+          {/* Scope filter pills */}
           <div className="flex flex-wrap gap-3 mb-6">
             {[
-              { label: 'All Documents',       filter: FILTER_ALL,         count: allDocuments.length,                              icon: <FaFolder /> },
-              { label: 'Account Documents',   filter: FILTER_ACCOUNT,     count: allDocuments.filter(d => !d.consignment).length,  icon: <FaInbox /> },
-              { label: 'Consignment Docs',    filter: FILTER_CONSIGNMENT, count: allDocuments.filter(d =>  d.consignment).length,  icon: <FaBox /> },
+              { label: 'All Documents',    filter: FILTER_ALL,         count: allDocuments.length,                              icon: <FaFolder /> },
+              { label: 'Account Documents',filter: FILTER_ACCOUNT,     count: allDocuments.filter(d => !d.consignment).length,  icon: <FaInbox /> },
+              { label: 'Consignment Docs', filter: FILTER_CONSIGNMENT, count: allDocuments.filter(d =>  d.consignment).length,  icon: <FaBox /> },
             ].map(({ label, filter, count, icon }) => (
               <button
                 key={filter}
@@ -215,7 +290,7 @@ const DocumentsPage = () => {
             ))}
           </div>
 
-          {/* Search + consignment filter */}
+          {/* Search + consignment dropdown */}
           <div className="flex flex-col sm:flex-row gap-3 mb-6">
             <div className="flex-1 flex items-center gap-2 bg-gray-900 border border-gray-800 rounded-lg px-4 py-2.5">
               <FaSearch className="text-gray-500 text-sm" />
@@ -265,14 +340,13 @@ const DocumentsPage = () => {
                     key={doc.id}
                     className="bg-gray-900 border border-gray-800 rounded-xl p-5 hover:border-cyan-500/50 transition flex flex-col gap-3"
                   >
-                    {/* Top: icon + name */}
+                    {/* Icon + name */}
                     <div className="flex items-start gap-3">
                       <div className="text-4xl mt-0.5 shrink-0">{getFileIcon(doc.file_name)}</div>
                       <div className="flex-1 min-w-0">
                         <h3 className="text-white font-semibold text-sm leading-tight break-words line-clamp-2">
                           {doc.file_name || 'Document'}
                         </h3>
-                        {/* Scope badge */}
                         <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded border ${badge.cls}`}>
                           {badge.label}
                         </span>
@@ -289,18 +363,14 @@ const DocumentsPage = () => {
                       )}
                     </div>
 
-                    {/* Download */}
-                    <button
-                      onClick={() => handleDownload(doc)}
-                      className="mt-auto w-full px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-lg flex items-center justify-center gap-2 text-sm transition"
-                    >
-                      <FaDownload /> Download
-                    </button>
+                    {/* Download button with live state */}
+                    <DownloadButton doc={doc} />
                   </div>
                 );
               })}
             </div>
           )}
+
         </div>
       </div>
     </>

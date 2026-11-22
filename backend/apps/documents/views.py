@@ -1,3 +1,7 @@
+import mimetypes
+import os
+
+from django.http import FileResponse, Http404
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -90,7 +94,51 @@ class DocumentViewSet(viewsets.ModelViewSet):
         return super().update(request, *args, **kwargs)
 
     # ------------------------------------------------------------------ #
-    # Custom actions                                                       #
+    # Download — authenticated, forces browser Save-As dialog             #
+    # ------------------------------------------------------------------ #
+
+    @action(detail=True, methods=['get'], url_path='download')
+    def download(self, request, pk=None):
+        """
+        Authenticated file download.
+
+        Returns the raw file bytes with:
+          Content-Disposition: attachment; filename="<original_name>"
+        so the browser shows a Save-As dialog instead of opening inline.
+
+        Access control is enforced by get_queryset — clients can only
+        download their own documents.
+        """
+        document = self.get_object()   # raises 403/404 if not permitted
+
+        file_field = document.file_path
+        if not file_field or not file_field.name:
+            raise Http404('File not found.')
+
+        try:
+            file_handle = file_field.open('rb')
+        except (FileNotFoundError, OSError):
+            raise Http404('File not found on server.')
+
+        # Guess MIME type from extension; fall back to octet-stream
+        filename = os.path.basename(file_field.name)
+        mime_type, _ = mimetypes.guess_type(filename)
+        if not mime_type:
+            mime_type = 'application/octet-stream'
+
+        response = FileResponse(
+            file_handle,
+            content_type=mime_type,
+            as_attachment=True,       # sets Content-Disposition: attachment
+            filename=filename,
+        )
+
+        # Expose the header so the browser honours it cross-origin
+        response['Access-Control-Expose-Headers'] = 'Content-Disposition'
+        return response
+
+    # ------------------------------------------------------------------ #
+    # Custom read actions                                                  #
     # ------------------------------------------------------------------ #
 
     @action(
@@ -117,7 +165,6 @@ class DocumentViewSet(viewsets.ModelViewSet):
         """
         user = request.user
         if user.role == 'client':
-            # Safety: clients can only see their own
             try:
                 if str(user.client_profile.id) != str(client_id):
                     return Response(
